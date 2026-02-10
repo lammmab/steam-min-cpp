@@ -1,0 +1,77 @@
+cmake_minimum_required(VERSION 4.0)
+project(SteamClient LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+set(CMAKE_POLICY_VERSION_MINIMUM 3.1)
+
+include(FetchContent)
+include(cmake/get_cpm.cmake)
+FetchContent_Declare(
+    asio
+    GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
+    GIT_TAG asio-1-27-0
+)
+FetchContent_MakeAvailable(asio)
+
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.12.0
+)
+FetchContent_MakeAvailable(spdlog)
+
+
+find_package(absl REQUIRED)
+
+file(GLOB_RECURSE SOURCES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
+)
+
+add_executable(SteamClient ${SOURCES})
+
+target_include_directories(SteamClient PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${asio_SOURCE_DIR}/asio/include
+)
+
+find_package(CURL REQUIRED)
+CPMAddPackage(
+	NAME          	cryptopp-cmake
+	GIT_REPOSITORY	"https://github.com/abdes/cryptopp-cmake.git"
+	GIT_TAG       	"CRYPTOPP_8_9_0"
+	OPTIONS       	"CRYPTOPP_BUILD_TESTING OFF" "CRYPTOPP_INSTALL OFF"
+)
+
+target_link_libraries(SteamClient PRIVATE 
+    spdlog::spdlog_header_only
+    CURL::libcurl
+    cryptopp::cryptopp
+    absl::algorithm
+    absl::base
+    absl::debugging
+    absl::flat_hash_map
+    absl::memory
+    absl::strings
+    absl::synchronization
+    absl::time
+    absl::utility
+    absl::log
+)
+
+find_package(Protobuf REQUIRED)
+
+if(Protobuf_FOUND)
+    message(STATUS "Found Protobuf: ${Protobuf_INCLUDE_DIRS} ${Protobuf_LIBRARIES}")
+    target_include_directories(SteamClient PRIVATE ${Protobuf_INCLUDE_DIRS})
+    target_link_libraries(SteamClient PRIVATE ${Protobuf_LIBRARIES})
+else()
+    message(FATAL_ERROR "Protobuf not found. Make sure you installed the C++ library and set CMAKE_PREFIX_PATH.")
+endif()
+
+if(WIN32)
+    target_link_libraries(SteamClient PRIVATE ws2_32)
+    target_compile_definitions(SteamClient PRIVATE _WIN32_WINNT=0x0601)
+endif()
