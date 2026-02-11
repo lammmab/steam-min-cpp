@@ -4,15 +4,13 @@
 
 int main() {
     asio::io_context io_ctx;
-
-    
-    std::thread io_thread([&io_ctx]() {
-        io_ctx.run();
-    });
     
     SteamClient client(io_ctx);
 
     client.connect();
+    std::thread io_thread([&io_ctx]() {
+        io_ctx.run();
+    });
 
     std::cin.get();
 

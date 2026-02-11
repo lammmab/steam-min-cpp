@@ -12,40 +12,49 @@
 #include <stdexcept>
 #include "web/cmfetcher.h"
 #include <spdlog/spdlog.h>
+#include <optional>
+
+enum class ConnectionState{
+    DISCONNECTED,
+    CONNECTING,
+    CONNECTED
+};
 
 class TCPConnection {
 public:
     TCPConnection(asio::io_context& ctx);
+    TCPConnection();
+
     ~TCPConnection();
 
-    void open();
-    void close();
+    void open_tcp();
+    void close_tcp();
 
-    void put_message(const std::vector<uint8_t>& data);
-    bool has_message();
-    std::vector<uint8_t> get_message();
-    bool is_connected();
-    private:
-    void reader_loop();
-    void writer_loop();
-    void read_packets();
+    void async_send(std::vector<uint8_t> data);
+
+    inline bool is_connected() const {
+        return state_ == ConnectionState::CONNECTED;
+    }
+    std::function<void(std::vector<uint8_t>)> on_frame;
+    
+private:
+    void start_read_header();
+    void start_read_body(uint32_t length);
+    void do_write();
+
+    void handle_disconnect(const std::string& reason);
+    void handle_disconnect(const std::error_code& reason);
+
     CMFetcher fetcher_;
     
-    asio::ip::tcp::socket socket_;
-    std::thread reader_thread_;
-    std::thread writer_thread_;
+    std::array<uint8_t, 8> header_buffer_;
+    std::vector<uint8_t> body_buffer_;
+    std::deque<std::vector<uint8_t>> write_queue_;
     
-    std::vector<uint8_t> read_buffer_;
-    std::queue<std::vector<uint8_t>> send_queue_;
-    std::queue<std::vector<uint8_t>> recv_queue_;
+    ConnectionState state_ = ConnectionState::DISCONNECTED;
     
-    std::mutex send_mutex_;
-    std::mutex recv_mutex_;
-    std::condition_variable send_cv_;
-    bool stop_threads_ = false;
-    bool connected_ = false;
-    asio::io_context& ctx;
-
     const std::array<uint8_t, 4> MAGIC = {'V','T','0','1'};
-
+        
+    asio::io_context& ctx;
+    asio::ip::tcp::socket socket_;
 };

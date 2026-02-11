@@ -6,60 +6,39 @@
 // Connect via TCP, then start message loop
 void CMClient::start_session() {
     try {
-        connection_->open();
+        connection_->on_frame = [this](std::vector<uint8_t> frame) {
+            consume_frame(frame);
+        };
+        connection_->open_tcp();
         spdlog::info("Connected successfully.");
-        msg_thread_ = std::thread([this]{ start_message_loop(); });
     } catch (const std::exception& e) {
         spdlog::error("Could not connect via TCP.");
     }
 }
 
-bool CMClient::is_tcp_connected() {
-    return connection_->is_connected();
-}
-
 // Start consuming TCP messages
-void CMClient::start_message_loop() {
-    spdlog::info("Starting TCP message loop...");
-
-    std::vector<uint8_t> buffer;
-    size_t frame_count = 0;
-
-    while (!stop_msg_thread_ && connection_->is_connected()) {
-        while (connection_->has_message()) {
-            auto frame = connection_->get_message();
-            uint32_t emsg = frame[0] | (frame[1]<<8) | (frame[2]<<16) | (frame[3]<<24);
-            frame_count++;
-            spdlog::info("Processing frame #{} with {} bytes", frame_count, frame.size());
-
-            try {
-                if (is_protobuf_emsg(emsg)) {
-                    MsgProto msg;
-                    msg.parse(frame);
-                    rcv_msg(msg);
-                } else {
-                    Msg msg;
-                    msg.parse(frame);
-                    rcv_msg(msg);
-                }
-
-                spdlog::info("Finished handling msg for frame #{}", frame_count);
-
-            } catch (const std::exception& e) {
-                spdlog::error("Failed to parse incoming message in frame #{}: {}", frame_count, e.what());
-            }
+void CMClient::consume_frame(std::vector<uint8_t> frame) {
+    uint32_t emsg = frame[0] | (frame[1] << 8) | (frame[2] << 16) | (frame[3] << 24);
+    try {
+        if (is_protobuf_emsg(emsg)) {
+            MsgProto msg;
+            msg.parse(frame);
+            emit(msg);
+        } else {
+            Msg msg;
+            msg.parse(frame);
+            emit(msg);
         }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to parse frame (EMsg: {}): {}", emsg, e.what());
     }
-
-    spdlog::info("TCP message loop ended; processed {} frames.", frame_count);
 }
 
+/*
+// TODO: k_EMsgChannelEncryptRequest
 void CMClient::rcv_msg(const MsgProto& msg) {
     spdlog::info("Received MsgProto (EMsg: {})", msg.emsg);
     spdlog::info(msg.to_string());
-
 }
 
 void CMClient::rcv_msg(const Msg& msg) {
@@ -70,6 +49,7 @@ void CMClient::rcv_msg(const Msg& msg) {
         spdlog::info("Received CMsgChannelEncryptRequest!");
     }
 }
+*/
 
 void CMClient::send_msg(const MsgProto& msg) {
     std::vector<uint8_t> buffer;
@@ -96,12 +76,12 @@ void CMClient::send_msg(const MsgProto& msg) {
     std::memcpy(buffer.data(), &msg_len, 4);
 
     spdlog::info("Sending message (EMsg: {}, total size: {})", msg.emsg, buffer.size());
-    connection_->put_message(buffer);
+    connection_->async_send(buffer);
 }
 
 void CMClient::shutdown() {
-    stop_msg_thread_ = true;
-    if (msg_thread_.joinable()) msg_thread_.join();
-    connection_->close();
+    if (connection_ && connection_->is_connected())
+        connection_->close_tcp();
+    
     spdlog::info("Closed TCP connection and CMClient successfully");
 }

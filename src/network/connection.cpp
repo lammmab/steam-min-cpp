@@ -1,6 +1,6 @@
 #include "connection.h"
 
-uint32_t parse_message_length(const std::vector<uint8_t>& buffer) {
+uint32_t parse_message_length(const std::array<uint8_t, 8>& buffer) {
     if (buffer.size() < 4) {
         throw std::runtime_error("Buffer too small to parse length");
     }
@@ -14,183 +14,145 @@ uint32_t parse_message_length(const std::vector<uint8_t>& buffer) {
     return len;
 }
 
-TCPConnection::TCPConnection(asio::io_context& ctx)
-    : socket_(ctx), ctx(ctx)
-{
-    read_buffer_.resize(8192);
+bool validate_magic(const std::array<uint8_t, 8>& buffer,const std::array<uint8_t, 4>& MAGIC) {
+    for (size_t i = 0; i < MAGIC.size(); ++i) {
+        if (buffer[4 + i] != MAGIC[i]) {
+            return false;
+        }
+    }
+    return true;
 }
+
+TCPConnection::TCPConnection(asio::io_context& ctx)
+    : socket_(ctx), ctx(ctx) {}
 
 TCPConnection::~TCPConnection() {
-    if (connected_) close();
+    if (is_connected()) close_tcp();
 }
 
-void TCPConnection::close() {
-    stop_threads_ = true;
-    send_cv_.notify_all();
+void TCPConnection::close_tcp()
+{
+    if (state_ == ConnectionState::DISCONNECTED)
+        return;
 
-    if (socket_.is_open()) {
-        std::error_code ec;
-        socket_.close(ec);
-    }
+    std::error_code ec;
+    socket_.close(ec);
 
-    if (reader_thread_.joinable()) reader_thread_.join();
-    if (writer_thread_.joinable()) writer_thread_.join();
-
-    connected_ = false;
+    state_ = ConnectionState::DISCONNECTED;
 }
 
-void TCPConnection::open() {
-    if (connected_) return;
+void TCPConnection::open_tcp()
+{
+    if (state_ != ConnectionState::DISCONNECTED)
+        return;
 
-    bool fetched_successfully = fetcher_.fetch_cm_servers();
-    if (!fetched_successfully) {
-        throw std::runtime_error("Could not fetch from CM servers");
-    }
+    spdlog::info("TCPConnection: starting open_tcp()");
+    state_ = ConnectionState::CONNECTING;
 
-    std::vector<std::pair<std::string, int>> servers = fetcher_.get_servers();
+    fetcher_.fetch_cm_servers();
+    auto servers = fetcher_.get_servers();
     if (servers.empty()) {
-        throw std::runtime_error("No CM servers found");
+        spdlog::error("TCPConnection: no CM servers found");
+        throw std::runtime_error("No CM servers");
     }
+
+    spdlog::info("TCPConnection: resolving server {}:{}", servers[0].first, servers[0].second);
     asio::ip::tcp::resolver resolver(ctx);
-    std::exception_ptr last_error = nullptr;
+    auto endpoints = resolver.resolve(servers[0].first,
+                                      std::to_string(servers[0].second));
 
-    for (const auto& [host, port] : servers) {
-        try {
-            auto endpoints = resolver.resolve(host, std::to_string(port));
-
-            asio::connect(socket_, endpoints);
-
-            connected_ = true;
-
-            reader_thread_ = std::thread([this]{ reader_loop(); });
-            writer_thread_ = std::thread([this]{ writer_loop(); });
-            
-            return;
-        } catch (const std::exception& e) {
-            last_error = std::current_exception();
-            spdlog::error("Failed to connect to {}: {}", host, e.what());
-        }
-    }
-
-    if (last_error) {
-        connected_ = false;
-        std::rethrow_exception(last_error);
-    }
+    asio::async_connect(socket_, endpoints,
+        [this](std::error_code ec, auto) {
+            if (!ec) {
+                state_ = ConnectionState::CONNECTED;
+                spdlog::info("TCPConnection: connected, starting async read header");
+                start_read_header();
+            } else {
+                state_ = ConnectionState::DISCONNECTED;
+                spdlog::error("TCPConnection: failed to connect: {}", ec.message());
+            }
+        });
 }
 
-bool TCPConnection::is_connected() {
-    return connected_;
-}
+void TCPConnection::start_read_header()
+{
+    spdlog::info("TCPConnection: start_read_header() called");
+    auto self = this;
 
-void TCPConnection::put_message(const std::vector<uint8_t>& data) {
-    {
-        std::lock_guard<std::mutex> lock(send_mutex_);
-        send_queue_.push(data);
-    }
-    send_cv_.notify_one();
-}
-
-bool TCPConnection::has_message() {
-    std::lock_guard<std::mutex> lock(recv_mutex_);
-    return !recv_queue_.empty();
-}
-
-std::vector<uint8_t> TCPConnection::get_message() {
-    std::lock_guard<std::mutex> lock(recv_mutex_);
-    if (recv_queue_.empty()) return {};
-    auto msg = recv_queue_.front();
-    recv_queue_.pop();
-    return msg;
-}
-
-void TCPConnection::reader_loop() {
-    std::vector<uint8_t> recv_buffer;
-    constexpr uint32_t MAX_FRAME_SIZE = 16 * 1024 * 1024;
-
-    try {
-        spdlog::info("Reader loop started.");
-
-        while (connected_ && !stop_threads_) {
-            std::error_code ec;
-            size_t bytes_read = socket_.read_some(asio::buffer(read_buffer_), ec);
-
-            if (ec == asio::error::eof) {
-                spdlog::info("TCP connection closed by peer (EOF).");
-                break;
+    asio::async_read(socket_,
+        asio::buffer(header_buffer_, 8),
+        [this, self](std::error_code ec, std::size_t bytes_transferred) {
+            if (ec) {
+                spdlog::error("TCPConnection: header read failed: {}", ec.message());
+                return handle_disconnect(ec);
             }
 
-            if (ec) throw asio::system_error(ec);
+            spdlog::info("TCPConnection: header read {} bytes", bytes_transferred);
+            uint32_t len = parse_message_length(header_buffer_);
+            spdlog::info("TCPConnection: parsed frame length {}", len);
 
-            recv_buffer.insert(recv_buffer.end(), read_buffer_.begin(), read_buffer_.begin() + bytes_read);
-
-            while (recv_buffer.size() >= 8) {
-                uint32_t frame_len = recv_buffer[0] |
-                                     (recv_buffer[1] << 8) |
-                                     (recv_buffer[2] << 16) |
-                                     (recv_buffer[3] << 24);
-
-                if (frame_len > MAX_FRAME_SIZE) {
-                    spdlog::error("Frame length {} exceeds maximum allowed. Disconnecting.", frame_len);
-                    connected_ = false;
-                    stop_threads_ = true;
-                    return;
-                }
-
-                if (!std::equal(recv_buffer.begin() + 4, recv_buffer.begin() + 8, MAGIC.begin())) {
-                    spdlog::error("Invalid magic header. Disconnecting.");
-                    connected_ = false;
-                    stop_threads_ = true;
-                    return;
-                }
-
-                if (recv_buffer.size() < 8 + frame_len) {
-                    spdlog::info("Incomplete frame: have {} bytes, expected {} + 8", recv_buffer.size(), frame_len);
-                    break;
-                }
-
-                std::vector<uint8_t> frame(
-                    recv_buffer.begin() + 8,
-                    recv_buffer.begin() + 8 + frame_len
-                );
-
-                recv_buffer.erase(recv_buffer.begin(), recv_buffer.begin() + 8 + frame_len);
-
-                {
-                    std::lock_guard<std::mutex> lock(recv_mutex_);
-                    recv_queue_.push(std::move(frame));
-                }
-
-                spdlog::info("Queued frame of {} bytes. Remaining buffer: {} bytes", frame_len, recv_buffer.size());
+            if (!validate_magic(header_buffer_, MAGIC)) {
+                spdlog::error("TCPConnection: magic validation failed");
+                return handle_disconnect("Magic could not be verified");
             }
-        }
 
-    } catch (const std::exception& e) {
-        spdlog::error("Reader loop terminated due to exception: {}", e.what());
-    }
-
-    connected_ = false;
-    stop_threads_ = true;
-    spdlog::info("Reader loop ended.");
+            spdlog::info("TCPConnection: magic validated, reading body of length {}", len);
+            start_read_body(len);
+        });
 }
 
-void TCPConnection::writer_loop() {
-    try {
-        while (connected_ && !stop_threads_) {
-            std::unique_lock<std::mutex> lock(send_mutex_);
-            send_cv_.wait(lock, [this]{ return !send_queue_.empty() || stop_threads_; });
+void TCPConnection::start_read_body(uint32_t len)
+{
+    spdlog::info("TCPConnection: start_read_body() called with len {}", len);
+    body_buffer_.resize(len);
 
-            if (stop_threads_) break;
+    asio::async_read(socket_,
+        asio::buffer(body_buffer_),
+        [this](std::error_code ec, std::size_t bytes_transferred) {
+            if (ec) {
+                spdlog::error("TCPConnection: body read failed: {}", ec.message());
+                return handle_disconnect(ec);
+            }
 
-            auto data = std::move(send_queue_.front());
-            send_queue_.pop();
-            lock.unlock();
+            spdlog::info("TCPConnection: body read {} bytes", bytes_transferred);
+            if (on_frame) {
+                spdlog::info("TCPConnection: emitting on_frame callback");
+                on_frame(body_buffer_);
+            } else {
+                spdlog::warn("TCPConnection: on_frame callback is null");
+            }
 
-            std::error_code ec;
-            asio::write(socket_, asio::buffer(data), ec);
-            if (ec) throw asio::system_error(ec);
-        }
-    } catch (const std::exception& e) {
-        spdlog::error("Writer loop terminated: {}", e.what());
-        connected_ = false;
-    }
+            spdlog::info("TCPConnection: looping to next header read");
+            start_read_header();
+        });
+}
+void TCPConnection::async_send(std::vector<uint8_t> data)
+{
+    bool write_in_progress = !write_queue_.empty();
+    write_queue_.push_back(std::move(data));
+
+    if (!write_in_progress)
+        do_write();
+}
+
+void TCPConnection::do_write()
+{
+    asio::async_write(socket_,
+        asio::buffer(write_queue_.front()),
+        [this](std::error_code ec, std::size_t) {
+            if (ec) return handle_disconnect(ec);
+
+            write_queue_.pop_front();
+            if (!write_queue_.empty())
+                do_write();
+        });
+}
+
+void TCPConnection::handle_disconnect(const std::string& reason) {
+    spdlog::error("TCP disconnected: {}", reason);
+    close_tcp();
+}
+
+void TCPConnection::handle_disconnect(const std::error_code& ec) {
+    handle_disconnect(ec.message());
 }

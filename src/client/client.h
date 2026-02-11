@@ -6,26 +6,39 @@
 #include "network/cmclient.h"
 #include "auth/auth.h"
 
-struct Placeholder {};
 
 class SteamClient {
 public:
-    SteamClient(asio::io_context& ctx);
-    ~SteamClient();
+    SteamClient(asio::io_context& ctx)
+        : network_(ctx) {}
 
-    void connect();
-    void disconnect();
-    bool is_connected() const;
+    ~SteamClient() {
+        if (auth_.logged_in()) logout();
+        if (network_.is_tcp_connected()) disconnect();
+    }
 
-    bool anonymous_login();
-    void logout();
-    bool logged_on() const;
+    // TCP Connection / CMClient Delegation
+    inline void connect() {
+        network_.start_session();
+    };
+    inline void disconnect() {
+        network_.shutdown();
+    };
+    inline bool is_connected() const {
+        return network_.is_tcp_connected();
+    };
+
+    // Authorization Delegation
+    inline bool anonymous_login() {
+        return auth_.anonymous_login();
+    };
+    inline void logout() {
+        auth_.logout();
+    };
+    inline bool logged_on() const {
+        return auth_.logged_in();
+    };
 private:
     CMClient network_;
     Auth auth_;
-    Placeholder product_info_;
-    Placeholder vdf_parser_;
-
-    bool logged_on_;
-    uint64_t current_jobid_;
 };
