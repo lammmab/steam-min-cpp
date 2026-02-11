@@ -14,14 +14,12 @@ int main() {
 
     client.connect();
 
-    std::cout << "Press Enter to disconnect...\n";
     std::cin.get();
 
     client.disconnect();
 
     io_ctx.stop();
     io_thread.join();
-    std::cout << "Press Enter to stop...\n";
 
     return 0;
 }

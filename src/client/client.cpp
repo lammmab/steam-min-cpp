@@ -7,15 +7,15 @@ SteamClient::SteamClient(asio::io_context& ctx)
 
 SteamClient::~SteamClient() {
     if (logged_on_) logout();
-    disconnect();
+    if (network_.is_tcp_connected()) disconnect();
 }
 
 void SteamClient::connect() {
-    network_.connect();
+    network_.start_session();
 }
 
 void SteamClient::disconnect() {
-    network_.disconnect();
+    network_.shutdown();
 }
 
 void SteamClient::logout() {

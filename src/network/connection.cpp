@@ -1,15 +1,30 @@
 #include "connection.h"
 
+uint32_t parse_message_length(const std::vector<uint8_t>& buffer) {
+    if (buffer.size() < 4) {
+        throw std::runtime_error("Buffer too small to parse length");
+    }
+
+    uint32_t len = 0;
+    len |= static_cast<uint32_t>(buffer[0]);
+    len |= static_cast<uint32_t>(buffer[1]) << 8;
+    len |= static_cast<uint32_t>(buffer[2]) << 16;
+    len |= static_cast<uint32_t>(buffer[3]) << 24;
+
+    return len;
+}
+
 TCPConnection::TCPConnection(asio::io_context& ctx)
     : socket_(ctx), ctx(ctx)
 {
+    read_buffer_.resize(8192);
 }
 
 TCPConnection::~TCPConnection() {
-    disconnect();
+    if (connected_) close();
 }
 
-void TCPConnection::disconnect() {
+void TCPConnection::close() {
     stop_threads_ = true;
     send_cv_.notify_all();
 
@@ -24,7 +39,7 @@ void TCPConnection::disconnect() {
     connected_ = false;
 }
 
-void TCPConnection::connect_or_throw() {
+void TCPConnection::open() {
     if (connected_) return;
 
     bool fetched_successfully = fetcher_.fetch_cm_servers();
@@ -53,7 +68,7 @@ void TCPConnection::connect_or_throw() {
             return;
         } catch (const std::exception& e) {
             last_error = std::current_exception();
-            std::cerr << "Failed to connect to " << host << ": " << e.what() << "\n";
+            spdlog::error("Failed to connect to {}: {}", host, e.what());
         }
     }
 
@@ -89,27 +104,73 @@ std::vector<uint8_t> TCPConnection::get_message() {
 }
 
 void TCPConnection::reader_loop() {
+    std::vector<uint8_t> recv_buffer;
+    constexpr uint32_t MAX_FRAME_SIZE = 16 * 1024 * 1024;
+
     try {
+        spdlog::info("Reader loop started.");
+
         while (connected_ && !stop_threads_) {
             std::error_code ec;
             size_t bytes_read = socket_.read_some(asio::buffer(read_buffer_), ec);
 
-            if (ec == asio::error::eof) break;
+            if (ec == asio::error::eof) {
+                spdlog::info("TCP connection closed by peer (EOF).");
+                break;
+            }
+
             if (ec) throw asio::system_error(ec);
 
-            std::vector<uint8_t> data(read_buffer_.begin(), read_buffer_.begin() + bytes_read);
+            recv_buffer.insert(recv_buffer.end(), read_buffer_.begin(), read_buffer_.begin() + bytes_read);
 
-            {
-                std::lock_guard<std::mutex> lock(recv_mutex_);
-                recv_queue_.push(std::move(data));
+            while (recv_buffer.size() >= 8) {
+                uint32_t frame_len = recv_buffer[0] |
+                                     (recv_buffer[1] << 8) |
+                                     (recv_buffer[2] << 16) |
+                                     (recv_buffer[3] << 24);
+
+                if (frame_len > MAX_FRAME_SIZE) {
+                    spdlog::error("Frame length {} exceeds maximum allowed. Disconnecting.", frame_len);
+                    connected_ = false;
+                    stop_threads_ = true;
+                    return;
+                }
+
+                if (!std::equal(recv_buffer.begin() + 4, recv_buffer.begin() + 8, MAGIC.begin())) {
+                    spdlog::error("Invalid magic header. Disconnecting.");
+                    connected_ = false;
+                    stop_threads_ = true;
+                    return;
+                }
+
+                if (recv_buffer.size() < 8 + frame_len) {
+                    spdlog::info("Incomplete frame: have {} bytes, expected {} + 8", recv_buffer.size(), frame_len);
+                    break;
+                }
+
+                std::vector<uint8_t> frame(
+                    recv_buffer.begin() + 8,
+                    recv_buffer.begin() + 8 + frame_len
+                );
+
+                recv_buffer.erase(recv_buffer.begin(), recv_buffer.begin() + 8 + frame_len);
+
+                {
+                    std::lock_guard<std::mutex> lock(recv_mutex_);
+                    recv_queue_.push(std::move(frame));
+                }
+
+                spdlog::info("Queued frame of {} bytes. Remaining buffer: {} bytes", frame_len, recv_buffer.size());
             }
         }
+
     } catch (const std::exception& e) {
-        spdlog::error("Reader loop terminated: {}", e.what());
+        spdlog::error("Reader loop terminated due to exception: {}", e.what());
     }
 
     connected_ = false;
-    disconnect();
+    stop_threads_ = true;
+    spdlog::info("Reader loop ended.");
 }
 
 void TCPConnection::writer_loop() {

@@ -18,8 +18,8 @@ public:
     TCPConnection(asio::io_context& ctx);
     ~TCPConnection();
 
-    void connect_or_throw();
-    void disconnect();
+    void open();
+    void close();
 
     void put_message(const std::vector<uint8_t>& data);
     bool has_message();
@@ -46,5 +46,6 @@ public:
     bool connected_ = false;
     asio::io_context& ctx;
 
-    static constexpr uint8_t MAGIC[4] = {'V','T','0','1'};
+    const std::array<uint8_t, 4> MAGIC = {'V','T','0','1'};
+
 };

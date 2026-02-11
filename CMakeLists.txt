@@ -23,7 +23,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(spdlog)
 
 
-find_package(absl REQUIRED)
 
 file(GLOB_RECURSE SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
@@ -45,31 +44,24 @@ CPMAddPackage(
 	OPTIONS       	"CRYPTOPP_BUILD_TESTING OFF" "CRYPTOPP_INSTALL OFF"
 )
 
+set(protobuf_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+CPMAddPackage(
+    NAME protobuf
+    GIT_REPOSITORY "https://github.com/protocolbuffers/protobuf.git"
+    GIT_TAG "v33.5"
+    OPTIONS
+        "protobuf_BUILD_TESTS OFF"
+        "protobuf_USE_PACKAGE_ABSL ON"
+)
+
+target_link_libraries(SteamClient PRIVATE protobuf::libprotobuf)
+target_include_directories(SteamClient PRIVATE ${protobuf_SOURCE_DIR}/src)
+
 target_link_libraries(SteamClient PRIVATE 
     spdlog::spdlog_header_only
     CURL::libcurl
     cryptopp::cryptopp
-    absl::algorithm
-    absl::base
-    absl::debugging
-    absl::flat_hash_map
-    absl::memory
-    absl::strings
-    absl::synchronization
-    absl::time
-    absl::utility
-    absl::log
 )
-
-find_package(Protobuf REQUIRED)
-
-if(Protobuf_FOUND)
-    message(STATUS "Found Protobuf: ${Protobuf_INCLUDE_DIRS} ${Protobuf_LIBRARIES}")
-    target_include_directories(SteamClient PRIVATE ${Protobuf_INCLUDE_DIRS})
-    target_link_libraries(SteamClient PRIVATE ${Protobuf_LIBRARIES})
-else()
-    message(FATAL_ERROR "Protobuf not found. Make sure you installed the C++ library and set CMAKE_PREFIX_PATH.")
-endif()
 
 if(WIN32)
     target_link_libraries(SteamClient PRIVATE ws2_32)
