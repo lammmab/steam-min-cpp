@@ -13,6 +13,8 @@
 
 #include "network/msg/typed/typedmsg.h"
 
+#include "network/tasks/encryption.h"
+
 #include <atomic>
 #include <thread>
 
@@ -54,4 +56,5 @@ private:
 
     bool channel_secured_ = false;
     std::unique_ptr<TCPConnection> connection_;
+    SteamEncryptionHandler encryption_;
 };

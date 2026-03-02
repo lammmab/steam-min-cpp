@@ -57,4 +57,5 @@ private:
         
     asio::io_context& ctx;
     asio::ip::tcp::socket socket_;
+    std::function<void(const std::vector<uint8_t>&)> wait_for_callback;
 };

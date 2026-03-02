@@ -28,6 +28,15 @@ void SteamCrypto::load_universe_pub() {
     universe_pub_.Load(ss2);
 }
 
+std::vector<uint8_t> SteamCrypto::encrypt_RSA_OAEP_SHA1(
+    const std::vector<uint8_t>& data
+) {
+    RSAES_OAEP_SHA_Encryptor encryptor(universe_pub_);
+    std::vector<uint8_t> encrypted(encryptor.CiphertextLength(data.size()));
+    encryptor.Encrypt(rng, data.data(), data.size(), encrypted.data());
+    return encrypted;
+}
+
 SteamCrypto::SessionKey SteamCrypto::generate_session_key(const std::vector<uint8_t>& hmac_secret) {
     std::vector<uint8_t> aes_key = generate_random_bytes(AES::DEFAULT_KEYLENGTH);
 

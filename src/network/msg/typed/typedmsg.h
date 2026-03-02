@@ -1,3 +1,5 @@
+#pragma once
+
 #include "network/msg/msg.h"
 
 inline uint32_t read_le32(const uint8_t* ptr) {
@@ -15,15 +17,16 @@ struct MsgChannelEncryptRequest {
     uint32_t Universe;
     std::vector<uint8_t> Challenge;
 
+    size_t HEADER_SIZE = 16;
+
     void deserialize(const std::vector<uint8_t>& payload) {
-        size_t header_size = 16;
-        if (payload.size() < header_size + 8)
+        if (payload.size() < HEADER_SIZE + 8)
             throw std::runtime_error("Payload too short");
 
-        ProtocolVersion = read_le32(payload.data() + header_size);
-        Universe        = read_le32(payload.data() + header_size + 4);
+        ProtocolVersion = read_le32(payload.data() + HEADER_SIZE);
+        Universe        = read_le32(payload.data() + HEADER_SIZE + 4);
 
-        Challenge.assign(payload.begin() + header_size + 8, payload.end());
+        Challenge.assign(payload.begin() + HEADER_SIZE + 8, payload.end());
     }
 };
 

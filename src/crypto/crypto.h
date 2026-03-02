@@ -13,6 +13,7 @@
 #include <cryptopp/modes.h>
 #include <cryptopp/filters.h>
 #include <cryptopp/base64.h>
+#include <cryptopp/crc.h>
 #include <sstream>
 
 class SteamCrypto {
@@ -57,8 +58,25 @@ public:
         const std::vector<uint8_t>& secret,
         const std::vector<uint8_t>& data
     );
+    std::vector<uint8_t> encrypt_RSA_OAEP_SHA1(
+        const std::vector<uint8_t>& data
+    );
     CryptoPP::AutoSeededRandomPool rng;
 
+    inline uint32_t crc32(const std::vector<uint8_t>& data) {
+        CryptoPP::CRC32 crc;
+        crc.Update(data.data(), data.size());
+
+        CryptoPP::SecByteBlock hash(crc.DigestSize());
+        crc.TruncatedFinal(hash, hash.size());
+
+        uint32_t result = 0;
+        for (size_t i = 0; i < 4; ++i) {
+            result |= static_cast<uint32_t>(hash[i]) << (8 * i);
+        }
+        return result;
+    }
+    
 private:
     CryptoPP::RSA::PublicKey universe_pub_;
 

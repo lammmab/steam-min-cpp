@@ -1,7 +1,6 @@
 #include "network/cmclient.h"
 #include <iostream>
 #include <protogen/enums_clientserver.pb.h>
-#include <protogen/steammessages_clientserver_login.pb.h>
 
 // Connect via TCP, then start message loop
 void CMClient::start_session() {
@@ -57,8 +56,10 @@ void CMClient::rcv_msg(const Msg& msg) {
     spdlog::info(msg.to_string());
 
     if (msg.emsg == static_cast<uint32_t>(EMsg::k_EMsgChannelEncryptRequest)) {
-        TypedMsg<MsgChannelEncryptRequest> request(msg);
-        spdlog::info("Universe: {}, Protocol Version: {}",request.body.Universe,request.body.ProtocolVersion);
+        const TypedMsg<MsgChannelEncryptRequest> request(msg);
+        spdlog::info("Universe: {}, Protocol Version: {}, Challenge length: {}",request.body.Universe,request.body.ProtocolVersion,request.body.Challenge.size());
+        Msg response = encryption_.generate_encryption_response(request);
+        send_msg(response);
     }
 }
 

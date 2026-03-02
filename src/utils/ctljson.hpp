@@ -670,7 +670,7 @@ public:
 		return nestring(buf_() + pos, len);
 	}
 
-	view_type view(size_type pos, size_type len) const
+	view_type make_view(size_type pos, size_type len) const
 	{
 		return view_type(buf_() + pos, len);
 	}
