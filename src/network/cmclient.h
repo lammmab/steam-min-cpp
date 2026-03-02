@@ -11,6 +11,8 @@
 #include "network/msg/extendedmsg.h"
 #include "network/msg/msg.h"
 
+#include "network/msg/typed/typedmsg.h"
+
 #include <atomic>
 #include <thread>
 
@@ -40,7 +42,15 @@ public:
 private:
 
     void consume_frame(std::vector<uint8_t> frame);
-    void send_msg(const MsgProto& msg);
+
+    void send_msg_proto(const MsgProto& msg);
+    void send_msg(const Msg& msg);
+
+
+    void rcv_msg_proto(const MsgProto& msg);
+    void rcv_msg(const Msg& msg);
+
+    void setup_handlers();
 
     bool channel_secured_ = false;
     std::unique_ptr<TCPConnection> connection_;

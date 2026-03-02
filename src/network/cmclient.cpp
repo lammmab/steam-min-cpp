@@ -9,6 +9,9 @@ void CMClient::start_session() {
         connection_->on_frame = [this](std::vector<uint8_t> frame) {
             consume_frame(frame);
         };
+
+        setup_handlers();
+
         connection_->open_tcp();
         spdlog::info("Connected successfully.");
     } catch (const std::exception& e) {
@@ -34,9 +37,17 @@ void CMClient::consume_frame(std::vector<uint8_t> frame) {
     }
 }
 
-/*
-// TODO: k_EMsgChannelEncryptRequest
-void CMClient::rcv_msg(const MsgProto& msg) {
+void CMClient::setup_handlers() {
+    on<MsgProto>([this](const MsgProto& msg) {
+        rcv_msg_proto(msg);
+    });
+
+    on<Msg>([this](const Msg& msg) {
+        rcv_msg(msg);
+    });
+}
+
+void CMClient::rcv_msg_proto(const MsgProto& msg) {
     spdlog::info("Received MsgProto (EMsg: {})", msg.emsg);
     spdlog::info(msg.to_string());
 }
@@ -46,12 +57,12 @@ void CMClient::rcv_msg(const Msg& msg) {
     spdlog::info(msg.to_string());
 
     if (msg.emsg == static_cast<uint32_t>(EMsg::k_EMsgChannelEncryptRequest)) {
-        spdlog::info("Received CMsgChannelEncryptRequest!");
+        TypedMsg<MsgChannelEncryptRequest> request(msg);
+        spdlog::info("Universe: {}, Protocol Version: {}",request.body.Universe,request.body.ProtocolVersion);
     }
 }
-*/
 
-void CMClient::send_msg(const MsgProto& msg) {
+void CMClient::send_msg_proto(const MsgProto& msg) {
     std::vector<uint8_t> buffer;
 
     buffer.resize(4);
@@ -76,6 +87,26 @@ void CMClient::send_msg(const MsgProto& msg) {
     std::memcpy(buffer.data(), &msg_len, 4);
 
     spdlog::info("Sending message (EMsg: {}, total size: {})", msg.emsg, buffer.size());
+    connection_->async_send(buffer);
+}
+
+void CMClient::send_msg(const Msg& msg)
+{
+    std::vector<uint8_t> buffer;
+
+    buffer.resize(4);
+    uint32_t emsg_le = msg.emsg;
+
+    buffer.insert(buffer.end(),
+        reinterpret_cast<uint8_t*>(&emsg_le),
+        reinterpret_cast<uint8_t*>(&emsg_le) + 4);
+
+    buffer.insert(buffer.end(), msg.payload.begin(), msg.payload.end());
+
+    uint32_t msg_len = static_cast<uint32_t>(buffer.size() - 4);
+    std::memcpy(buffer.data(), &msg_len, 4);
+
+    spdlog::info("Sending RAW message (EMsg: {}, total size: {})", msg.emsg, buffer.size());
     connection_->async_send(buffer);
 }
 
