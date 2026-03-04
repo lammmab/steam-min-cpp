@@ -5,20 +5,34 @@
 #include <type_traits>
 #include <cstring>
 
+#include "utils/err.h"
+
 using byte = unsigned char;
+
+enum StreamingMode {
+    Read = 0,
+    Write = 1
+};
 
 class Stream
 {
 public:
     // Write-mode constructor (default)
-    Stream()
-        : readBuffer(nullptr), position(0)
+    explicit Stream(const StreamingMode stream_mode)
+        : readBuffer(nullptr), position(0), mode(stream_mode)
     {
+        RUNTIME_ASSERT(mode == StreamingMode::Write,"Cannot create read-mode stream with no data to read");
     }
 
     // Read-mode constructor
-    explicit Stream(const std::vector<byte>& input)
-        : readBuffer(&input), buffer(), position(0)
+    explicit Stream(const std::vector<byte>& input, const StreamingMode stream_mode)
+        : readBuffer(&input), buffer(), position(0), mode(stream_mode)
+    {
+    }
+    
+    // Read-mode constructor with offset
+    explicit Stream(const std::vector<byte>& input, size_t offset, const StreamingMode stream_mode)
+        : readBuffer(&input), buffer(), position(offset), mode(stream_mode)
     {
     }
 
@@ -151,4 +165,5 @@ private:
     const std::vector<byte>* readBuffer;
     std::vector<byte> buffer;
     size_t position;
+    StreamingMode mode;
 };

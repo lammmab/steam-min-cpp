@@ -16,7 +16,7 @@ namespace SteamInternal::Internal
 {
 	struct ISteamSerializable
 	{
-		virtual void Serialize(Stream& stream) = 0;
+		virtual void Serialize(Stream& stream) const = 0;
 		virtual void Deserialize( Stream& stream ) = 0;
 		virtual ~ISteamSerializable() = default;
 	};
@@ -39,6 +39,7 @@ namespace SteamInternal::Internal
 	struct IGCSerializableMessage : public ISteamSerializable
 	{
 		virtual uint32_t GetEMsg() = 0;
+		virtual bool IsProto() const = 0;
 	};
 
 
@@ -83,7 +84,7 @@ namespace SteamInternal::Internal
 			msgSize = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(magic);
@@ -130,7 +131,7 @@ namespace SteamInternal::Internal
 			serverLoad = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(challengeValue);
@@ -156,7 +157,7 @@ namespace SteamInternal::Internal
 			challengeValue = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(challengeValue);
@@ -176,7 +177,7 @@ namespace SteamInternal::Internal
 		{
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 
@@ -194,7 +195,7 @@ namespace SteamInternal::Internal
 		{
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 
@@ -212,7 +213,7 @@ namespace SteamInternal::Internal
 		{
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 
@@ -242,7 +243,7 @@ namespace SteamInternal::Internal
 			sourceJobID = UINT64_MAX;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)Msg);
@@ -297,7 +298,7 @@ namespace SteamInternal::Internal
 			sessionID = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)Msg);
@@ -332,7 +333,7 @@ namespace SteamInternal::Internal
 		// Static size: 4
 		SteamInternal::EMsg Msg;
 		// Static size: 4
-		int32_t headerLength;
+		mutable int32_t headerLength;
 		// Static size: 0
 		CMsgProtoBufHeader proto;
 
@@ -343,14 +344,14 @@ namespace SteamInternal::Internal
 			proto = CMsgProtoBufHeader();
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 			std::string protoData;
 			if (!proto.SerializeToString(&protoData))
 			{
 				throw std::runtime_error("Failed to serialize proto message");
 			}
-			headerLength = static_cast<int>(protoData.size());
+			headerLength = protoData.size();
 
 			stream.Write((int)MsgUtil::MakeMsg(Msg, true));
 			stream.Write(headerLength);
@@ -379,7 +380,7 @@ namespace SteamInternal::Internal
 		// Static size: 4
 		uint32_t Msg;
 		// Static size: 4
-		int32_t headerLength;
+		mutable int32_t headerLength;
 		// Static size: 0
 		CMsgProtoBufHeader proto;
 
@@ -390,18 +391,17 @@ namespace SteamInternal::Internal
 			proto = CMsgProtoBufHeader();
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 			std::string protoData;
 			if (!proto.SerializeToString(&protoData))
 			{
 				throw std::runtime_error("Failed to serialize proto message");
 			}
-			headerLength = static_cast<int>(protoData.size());
+			headerLength = protoData.size();
 
 			stream.Write(MsgUtil::MakeGCMsg(Msg, true));
 			stream.Write(headerLength);
-
 		}
 
 		void Deserialize( Stream& stream )
@@ -439,7 +439,7 @@ namespace SteamInternal::Internal
 			sourceJobID = UINT64_MAX;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(headerVersion);
@@ -465,7 +465,7 @@ namespace SteamInternal::Internal
 		{
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 
@@ -488,7 +488,7 @@ namespace SteamInternal::Internal
 			result = EResult::Invalid;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -517,7 +517,7 @@ namespace SteamInternal::Internal
 			universe = EUniverse::Invalid;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(protocolVersion);
@@ -547,7 +547,7 @@ namespace SteamInternal::Internal
 			keySize = 128;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(protocolVersion);
@@ -574,7 +574,7 @@ namespace SteamInternal::Internal
 			result = EResult::Invalid;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -623,7 +623,7 @@ namespace SteamInternal::Internal
 		{
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 
@@ -646,7 +646,7 @@ namespace SteamInternal::Internal
 			numBans = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(numBans);
@@ -670,7 +670,7 @@ namespace SteamInternal::Internal
 			uint64_t gameID;
 		public:
 			GameID GetgameID() const { return GameID(gameID); }
-			void SetgameID(const GameID& val) { gameID = val.ToUInt64(); }
+			void SetgameID(const GameID& val) { gameID = val.ConvertToUInt64(); }
 		// Static size: 2
 		uint16_t offline;
 
@@ -681,7 +681,7 @@ namespace SteamInternal::Internal
 			offline = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)appUsageEvent);
@@ -716,7 +716,7 @@ namespace SteamInternal::Internal
 			countGuestPassesToRedeem = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -758,7 +758,7 @@ namespace SteamInternal::Internal
 			dataLen = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamID);
@@ -802,7 +802,7 @@ namespace SteamInternal::Internal
 			timeStarted = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(accountType);
@@ -842,7 +842,7 @@ namespace SteamInternal::Internal
 			sessionId = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -882,7 +882,7 @@ namespace SteamInternal::Internal
 			countAttributes = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(sessionId);
@@ -913,7 +913,7 @@ namespace SteamInternal::Internal
 			result = EResult::Invalid;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -941,7 +941,7 @@ namespace SteamInternal::Internal
 			countAttributes = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(sessionId);
@@ -965,14 +965,14 @@ namespace SteamInternal::Internal
 			uint64_t gameId;
 		public:
 			GameID GetgameId() const { return GameID(gameId); }
-			void SetgameId(const GameID& val) { gameId = val.ToUInt64(); }
+			void SetgameId(const GameID& val) { gameId = val.ConvertToUInt64(); }
 
 		MsgClientGetFriendsWhoPlayGame()
 		{
 			gameId = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(gameId);
@@ -996,7 +996,7 @@ namespace SteamInternal::Internal
 			uint64_t gameId;
 		public:
 			GameID GetgameId() const { return GameID(gameId); }
-			void SetgameId(const GameID& val) { gameId = val.ToUInt64(); }
+			void SetgameId(const GameID& val) { gameId = val.ConvertToUInt64(); }
 		// Static size: 4
 		uint32_t countFriends;
 
@@ -1007,7 +1007,7 @@ namespace SteamInternal::Internal
 			countFriends = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1036,7 +1036,7 @@ namespace SteamInternal::Internal
 			flags = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(flags);
@@ -1070,7 +1070,7 @@ namespace SteamInternal::Internal
 			lifetimeMinutesPlayed = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1119,7 +1119,7 @@ namespace SteamInternal::Internal
 			timeBanExpires = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1163,7 +1163,7 @@ namespace SteamInternal::Internal
 			denyReason = EDenyReason::Unknown;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamId);
@@ -1194,7 +1194,7 @@ namespace SteamInternal::Internal
 			steamId = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamId);
@@ -1229,7 +1229,7 @@ namespace SteamInternal::Internal
 			waitTilMapChange = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamId);
@@ -1269,7 +1269,7 @@ namespace SteamInternal::Internal
 			steamIdGroup = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamIdUser);
@@ -1313,7 +1313,7 @@ namespace SteamInternal::Internal
 			clanRank = EClanRank::None;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamIdUser);
@@ -1351,7 +1351,7 @@ namespace SteamInternal::Internal
 			isVoiceSpeaker = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1415,7 +1415,7 @@ namespace SteamInternal::Internal
 			numMembers = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1468,7 +1468,7 @@ namespace SteamInternal::Internal
 			chatMsgType = EChatEntryType::Invalid;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamIdChatter);
@@ -1504,7 +1504,7 @@ namespace SteamInternal::Internal
 			type = EChatInfoType::Unknown;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1545,7 +1545,7 @@ namespace SteamInternal::Internal
 			chatAction = EChatAction::Unknown;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1591,7 +1591,7 @@ namespace SteamInternal::Internal
 			actionResult = EChatActionResult::Unknown;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1629,7 +1629,7 @@ namespace SteamInternal::Internal
 			type = EChatInfoType::Unknown;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1670,7 +1670,7 @@ namespace SteamInternal::Internal
 			ignore = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(mySteamId);
@@ -1706,7 +1706,7 @@ namespace SteamInternal::Internal
 			result = EResult::Invalid;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(friendId);
@@ -1739,7 +1739,7 @@ namespace SteamInternal::Internal
 			secMaxReconnectHint = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1787,7 +1787,7 @@ namespace SteamInternal::Internal
 			serverRealTime = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1828,7 +1828,7 @@ namespace SteamInternal::Internal
 			eServerTypeUnavailable = EServerType::First;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(jobidSent);
@@ -1856,7 +1856,7 @@ namespace SteamInternal::Internal
 			uint64_t gameId;
 		public:
 			GameID GetgameId() const { return GameID(gameId); }
-			void SetgameId(const GameID& val) { gameId = val.ToUInt64(); }
+			void SetgameId(const GameID& val) { gameId = val.ConvertToUInt64(); }
 		// Static size: 8
 		private:
 			uint64_t steamIdClan;
@@ -1902,7 +1902,7 @@ namespace SteamInternal::Internal
 			steamIdInvited = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)chatRoomType);
@@ -1962,7 +1962,7 @@ namespace SteamInternal::Internal
 			steamIdFriendChat = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1996,7 +1996,7 @@ namespace SteamInternal::Internal
 			count = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(marketingMessageUpdateTime);
@@ -2023,7 +2023,7 @@ namespace SteamInternal::Internal
 			appId = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(appId);
@@ -2054,7 +2054,7 @@ namespace SteamInternal::Internal
 			length = 0;
 		}
 
-		void Serialize(Stream& stream)
+		void Serialize(Stream& stream) const
 		{
 
 			stream.Write(appId);

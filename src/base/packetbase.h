@@ -26,9 +26,9 @@ public:
     PacketClientMsgProtobuf(SteamInternal::EMsg eMsg, const std::vector<uint8_t>& data)
         : msgType(eMsg), payload(data) 
     {
-        Stream s;
+        Stream s(payload,StreamingMode::Read);
         header.Deserialize(s);
-        bodyOffset = 0; // update when proper stream parsing is implemented
+        bodyOffset = s.Position();
     }
 
     bool IsProto() const override { return true; }
@@ -36,6 +36,7 @@ public:
     uint64_t TargetJobID() const override { return header.proto.jobid_target(); }
     uint64_t SourceJobID() const override { return header.proto.jobid_source(); }
     const std::vector<uint8_t>& GetData() const override { return payload; }
+    const size_t GetBodyOffset() { return bodyOffset; }
 };
 
 class PacketClientMsg : public IPacketMsg {
@@ -48,7 +49,7 @@ public:
     PacketClientMsg(SteamInternal::EMsg eMsg, const std::vector<uint8_t>& data)
         : msgType(eMsg), payload(data) 
     {
-        Stream s;
+        Stream s(payload,StreamingMode::Read);
         header.Deserialize(s);
         bodyOffset = 0;
     }
@@ -70,9 +71,9 @@ public:
     PacketMsg(SteamInternal::EMsg eMsg, const std::vector<uint8_t>& data)
         : msgType(eMsg), payload(data) 
     {
-        Stream s;
+        Stream s(payload,StreamingMode::Read);
         header.Deserialize(s);
-        bodyOffset = 0;
+        bodyOffset = s.Position();
     }
 
     bool IsProto() const override { return false; }

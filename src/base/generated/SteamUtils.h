@@ -57,7 +57,7 @@ public:
     GameID() : value(0) {}
     explicit GameID(uint64_t v) : value(v) {}
 
-    uint64_t ToUInt64() const
+    uint64_t ConvertToUInt64() const
     {
         return value;
     }

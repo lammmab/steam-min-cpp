@@ -23,6 +23,7 @@ public:
 
     // Payload access
     std::vector<uint8_t>& Payload() { return payload; }
+    const std::vector<uint8_t>& Payload() const { return payload; }
 
     // Writing helpers
     void WriteByte(uint8_t b) { payload.push_back(b); }
@@ -77,20 +78,19 @@ public:
     virtual bool IsProto() const = 0;
     virtual SteamInternal::EMsg MsgType() const = 0;
 
-    std::optional<SteamID> SteamID;
+    std::optional<SteamID> steam_id;
     int SessionID = 0;
-    JobID TargetJobID = 0;
-    JobID SourceJobID = 0;
+    uint64_t targetJobID = 0;
+    uint64_t sourceJobID = 0;
 
     MsgBaseHdr(size_t reserve = 0) : MsgBase(reserve), Header() {}
 
     // Serialize header + payload
     virtual std::vector<uint8_t> Serialize() const {
-        std::ostringstream os(std::ios::binary);
-        Header.Serialize(os);
-        os.write(reinterpret_cast<const char*>(payload.data()), payload.size());
-        std::string s = os.str();
-        return std::vector<uint8_t>(s.begin(), s.end());
+        Stream stream(StreamingMode::Write);
+        Header.Serialize(stream);
+        stream.Write(payload);
+        return stream.MoveBuffer();
     }
 
     virtual ~MsgBaseHdr() = default;

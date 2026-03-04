@@ -20,7 +20,7 @@ void CMClient::start_session() {
 
 // Start consuming TCP messages
 void CMClient::consume_frame(std::vector<uint8_t> frame) {
-    if (frame.size() < 4) return; // minimum size check
+    if (frame.size() < 4) return;
 
     uint32_t emsg = frame[0] | (frame[1] << 8) | (frame[2] << 16) | (frame[3] << 24);
 
@@ -69,10 +69,12 @@ void CMClient::rcv_msg(const PacketClientMsg& msg) {
     // 1. Convert to proper ChannelEncryptRequest from SteamLanguageInternal.h
     // 2. generate_encryption_response(ChannelEncryptRequest)
     // 3. send response and store key
-    if (msg.MsgType() == SteamInternal::EMsg::ChannelEncryptRequest) { 
-        spdlog::info("Handling encryption request");
+    try {
         EncryptionResponse response = generate_encryption_response(msg);
+        spdlog::info("Sending encryption response");
         send_msg(response.msg);
+    } catch (const std::exception& e) {
+        spdlog::error("Failed to generate/send encryption response: {}", e.what());
     }
 }
 

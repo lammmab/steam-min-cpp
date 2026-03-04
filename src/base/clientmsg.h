@@ -2,18 +2,16 @@
 #include "base/generated/Stream.h"
 
 template <typename TBody>
-class Msg : public MsgBase
+class Msg : public MsgBaseHdr<SteamInternal::Internal::MsgHdr>
 {
     static_assert(std::is_base_of<SteamInternal::Internal::ISteamSerializableMessage, TBody>::value,
                   "TBody must implement ISteamSerializableMessage");
 
 public:
-    MsgHdr Header;
     TBody Body;
-public:
     explicit Msg(int payloadReserve = 0)
     {
-        Payload.reserve(payloadReserve);
+        Payload().reserve(payloadReserve);
 
         Header.SetEMsg(Body.GetEMsg());
     }
@@ -21,28 +19,27 @@ public:
     Msg(const Msg<TBody>& other, int payloadReserve = 0)
         : Msg(payloadReserve)
     {
-        Header.TargetJobID = other.Header.SourceJobID;
+        Header.targetJobID = other.Header.sourceJobID;
     }
 
     explicit Msg(const IPacketMsg& packet)
     {
-        PacketMsg* packetMsg = dynamic_cast<PacketMsg*>(&packet);
+        const PacketMsg* packetMsg = dynamic_cast<const PacketMsg*>(&packet);
         if (!packetMsg)
             throw std::runtime_error("Msg<TBody> used for wrong packet type");
 
-        Header = packetMsg->Header;
+        Header = packetMsg->header;
 
         const std::vector<byte>& data = packetMsg->GetData();
-        size_t offset = packetMsg->GetBodyOffset();
+        size_t offset = packetMsg->bodyOffset;
 
-        Stream stream;
+        Stream stream(data,offset, StreamingMode::Read);
 
-        // In a real implementation, Stream would wrap data+offset.
         Body.Deserialize(stream);
 
         if (offset < data.size())
         {
-            Payload.insert(Payload.end(),
+            Payload().insert(Payload().end(),
                            data.begin() + offset,
                            data.end());
         }
@@ -54,21 +51,20 @@ public:
         return false;
     }
 
-    EMsg MsgType() const override
+    SteamInternal::EMsg MsgType() const override
     {
         return Header.Msg;
     }
 
-    std::vector<byte> Serialize() override
+    std::vector<byte> Serialize() const override 
     {
-        Stream stream;
+        Stream stream(StreamingMode::Write);
 
         Header.Serialize(stream);
         Body.Serialize(stream);
 
-        for (byte b : Payload)
-            stream.Write(b);
+        stream.Write(Payload().data(), Payload().size());
 
-        return std::vector<byte>(); // replace once Stream supports extraction
+        return stream.MoveBuffer();
     }
 };
