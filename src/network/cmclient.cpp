@@ -110,7 +110,7 @@ void CMClient::send_msg(const Msg<TBody>& msg)
 {
     auto buffer = msg.Serialize();
 
-    spdlog::info("Sending RAW message (size: {}), (EMsg: {})", buffer.size(), static_cast<uint32_t>(msg.Body.GetEMSG()));
+    spdlog::info("Sending RAW message (size: {}), (EMsg: {})", buffer.size(), static_cast<uint32_t>(msg.Body.GetEMsg()));
     connection_->async_send(buffer);
 }
 

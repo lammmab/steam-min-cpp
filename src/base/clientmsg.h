@@ -4,7 +4,7 @@
 template <typename TBody>
 class Msg : public MsgBase
 {
-    static_assert(std::is_base_of<ISteamSerializableMessage, TBody>::value,
+    static_assert(std::is_base_of<SteamInternal::Internal::ISteamSerializableMessage, TBody>::value,
                   "TBody must implement ISteamSerializableMessage");
 
 public:
