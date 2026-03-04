@@ -1,6 +1,6 @@
 #include "network/cmclient.h"
 #include <iostream>
-#include <protogen/enums_clientserver.pb.h>
+
 
 // Connect via TCP, then start message loop
 void CMClient::start_session() {
@@ -20,49 +20,63 @@ void CMClient::start_session() {
 
 // Start consuming TCP messages
 void CMClient::consume_frame(std::vector<uint8_t> frame) {
+    if (frame.size() < 4) return; // minimum size check
+
     uint32_t emsg = frame[0] | (frame[1] << 8) | (frame[2] << 16) | (frame[3] << 24);
+
     try {
-        if (is_protobuf_emsg(emsg)) {
-            MsgProto msg;
-            msg.parse(frame);
-            emit(msg);
+        std::unique_ptr<PacketMsg> packet;
+
+        if (is_protobuf_msg(emsg)) {
+            auto proto = std::make_unique<PacketClientMsgProtobuf>(static_cast<SteamInternal::EMsg>(emsg), frame);
+            emit(*proto);
         } else {
-            Msg msg;
-            msg.parse(frame);
-            emit(msg);
+            auto raw   = std::make_unique<PacketClientMsg>(static_cast<SteamInternal::EMsg>(emsg), frame);
+            emit(*raw);
         }
+
+        emit(std::move(packet));
+
     } catch (const std::exception& e) {
         spdlog::error("Failed to parse frame (EMsg: {}): {}", emsg, e.what());
     }
 }
 
 void CMClient::setup_handlers() {
-    on<MsgProto>([this](const MsgProto& msg) {
+    on<PacketClientMsgProtobuf>([this](const PacketClientMsgProtobuf& msg) {
         rcv_msg_proto(msg);
     });
 
-    on<Msg>([this](const Msg& msg) {
+    on<PacketClientMsg>([this](const PacketClientMsg& msg) {
         rcv_msg(msg);
     });
 }
 
-void CMClient::rcv_msg_proto(const MsgProto& msg) {
-    spdlog::info("Received MsgProto (EMsg: {})", msg.emsg);
-    spdlog::info(msg.to_string());
+void CMClient::rcv_msg_proto(const PacketClientMsgProtobuf& msg) {
+    spdlog::info("Received protobuf Msg (EMsg: {})", static_cast<uint32_t>(msg.MsgType()));
+    spdlog::info("Payload size: {}", msg.payload.size());
+    spdlog::info("Payload preview: {:02X} {:02X} {:02X} {:02X}", 
+                 msg.payload.size() > 0 ? msg.payload[0] : 0,
+                 msg.payload.size() > 1 ? msg.payload[1] : 0,
+                 msg.payload.size() > 2 ? msg.payload[2] : 0,
+                 msg.payload.size() > 3 ? msg.payload[3] : 0);
 }
 
-void CMClient::rcv_msg(const Msg& msg) {
-    spdlog::info("Received raw Msg (EMsg: {})", msg.emsg);
-    spdlog::info(msg.to_string());
+void CMClient::rcv_msg(const PacketClientMsg& msg) {
+    spdlog::info("Received raw Msg (EMsg: {})", static_cast<uint32_t>(msg.MsgType()));
+    spdlog::info("Payload size: {}", msg.payload.size());
+    spdlog::info("Body starts at offset: {}", msg.bodyOffset);
 
-    if (msg.emsg == static_cast<uint32_t>(EMsg::k_EMsgChannelEncryptRequest)) {
-        const TypedMsg<MsgChannelEncryptRequest> request(msg);
-        spdlog::info("Universe: {}, Protocol Version: {}, Challenge length: {}",request.body.Universe,request.body.ProtocolVersion,request.body.Challenge.size());
-        Msg response = encryption_.generate_encryption_response(request);
-        send_msg(response);
+    // TODO: handle encryption request
+    // 1. Convert to proper ChannelEncryptRequest from SteamLanguageInternal.h
+    // 2. generate_encryption_response(ChannelEncryptRequest)
+    // 3. send response and store key
+    if (msg.MsgType() == SteamInternal::EMsg::ChannelEncryptRequest) { 
+        spdlog::info("Received encryption request");
     }
 }
 
+/*
 void CMClient::send_msg_proto(const MsgProto& msg) {
     std::vector<uint8_t> buffer;
 
@@ -109,7 +123,7 @@ void CMClient::send_msg(const Msg& msg)
 
     spdlog::info("Sending RAW message (EMsg: {}, total size: {})", msg.emsg, buffer.size());
     connection_->async_send(buffer);
-}
+}*/
 
 void CMClient::shutdown() {
     if (connection_ && connection_->is_connected())

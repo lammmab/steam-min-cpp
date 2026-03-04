@@ -126,15 +126,32 @@ void TCPConnection::start_read_body(uint32_t len)
             start_read_header();
         });
 }
+
 void TCPConnection::async_send(std::vector<uint8_t> data)
 {
+    uint32_t data_len = static_cast<uint32_t>(data.size());
+    std::vector<uint8_t> buffer;
+
+    buffer.reserve(sizeof(uint32_t) + MAGIC.size() + data.size());
+
+    // https://github.com/SteamRE/SteamKit/blob/master/SteamKit2/SteamKit2/Networking/Steam3/TcpConnection.cs#L327
+    // 1. Append the data len
+    buffer.insert(buffer.end(),
+                  reinterpret_cast<uint8_t*>(&data_len),
+                  reinterpret_cast<uint8_t*>(&data_len) + sizeof(uint32_t));
+
+    // 2. Append the MAGIC constant (VT01)
+    buffer.insert(buffer.end(), MAGIC.begin(), MAGIC.end());
+
+    // 3. Append the data
+    buffer.insert(buffer.end(), data.begin(), data.end());
+
     bool write_in_progress = !write_queue_.empty();
-    write_queue_.push_back(std::move(data));
+    write_queue_.push_back(std::move(buffer));
 
     if (!write_in_progress)
         do_write();
 }
-
 void TCPConnection::do_write()
 {
     asio::async_write(socket_,

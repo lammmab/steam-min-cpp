@@ -7,16 +7,10 @@
 #include <cstdint>
 #include <vector>
 
-#include "network/msg/msgproto.h"
-#include "network/msg/extendedmsg.h"
-#include "network/msg/msg.h"
-
-#include "network/msg/typed/typedmsg.h"
-
-#include "network/tasks/encryption.h"
-
 #include <atomic>
 #include <thread>
+
+#include "base/packetbase.h"
 
 class CMClient: public medooze::EventEmitter {
 public:
@@ -44,17 +38,29 @@ public:
 private:
 
     void consume_frame(std::vector<uint8_t> frame);
+    inline bool is_protobuf_msg(uint32_t emsg_code) {
+        if (
+            emsg_code == (uint32_t)SteamInternal::EMsg::ChannelEncryptRequest ||
+            emsg_code == (uint32_t)SteamInternal::EMsg::ChannelEncryptResponse ||
+            emsg_code == (uint32_t)SteamInternal::EMsg::ChannelEncryptResult
+        ) {
+            return false;
+        }
 
+        return true;
+    }
+
+    /*
     void send_msg_proto(const MsgProto& msg);
     void send_msg(const Msg& msg);
+    */
 
+    void rcv_msg_proto(const PacketClientMsgProtobuf& msg);
+    void rcv_msg(const PacketClientMsg& msg);
 
-    void rcv_msg_proto(const MsgProto& msg);
-    void rcv_msg(const Msg& msg);
 
     void setup_handlers();
 
     bool channel_secured_ = false;
     std::unique_ptr<TCPConnection> connection_;
-    SteamEncryptionHandler encryption_;
 };

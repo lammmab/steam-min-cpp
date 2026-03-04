@@ -1,5 +1,8 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 4.0)
 project(SteamClient LANGUAGES CXX)
+
+find_package(CURL REQUIRED)
+find_package(OpenSSL REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -36,14 +39,6 @@ target_include_directories(SteamClient PRIVATE
     ${asio_SOURCE_DIR}/asio/include
 )
 
-find_package(CURL REQUIRED)
-CPMAddPackage(
-	NAME          	cryptopp-cmake
-	GIT_REPOSITORY	"https://github.com/abdes/cryptopp-cmake.git"
-	GIT_TAG       	"CRYPTOPP_8_9_0"
-	OPTIONS       	"CRYPTOPP_BUILD_TESTING OFF" "CRYPTOPP_INSTALL OFF"
-)
-
 set(protobuf_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 CPMAddPackage(
     NAME protobuf
@@ -60,7 +55,9 @@ target_include_directories(SteamClient PRIVATE ${protobuf_SOURCE_DIR}/src)
 target_link_libraries(SteamClient PRIVATE 
     spdlog::spdlog_header_only
     CURL::libcurl
-    cryptopp::cryptopp
+    #cryptopp::cryptopp
+    OpenSSL::SSL
+    OpenSSL::Crypto
 )
 
 if(WIN32)
