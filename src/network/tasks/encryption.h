@@ -10,6 +10,11 @@
 #include <stdexcept>
 #include <cstring>
 
+#include "base/generated/SteamLanguageInternal.h"
+#include "base/packetbase.h"
+#include "base/clientmsg.h"
+
+#include "utils/err.h"
 
 inline static uint32_t crc32_hash(const std::vector<uint8_t>& data)
 {
@@ -99,7 +104,7 @@ inline std::vector<uint8_t> generate_random_bytes(size_t length) {
 }
 
 struct EncryptionResponse {
-    const TypedMsg<MsgChannelEncryptResponse> msg;
+    Msg<SteamInternal::Internal::MsgChannelEncryptResponse> msg;
     std::vector<uint8_t> key;
 };
 
@@ -112,9 +117,14 @@ struct EncryptionResponse {
 // 7. Make a final array / append to the response payload in THIS ORDER:
 // 8. the encrypted vector array, the crc32 hash key, 4 nil bytes of padding
 
-inline EncryptionResponse generate_encryption_response(const TypedMsg<MsgChannelEncryptRequest>& request) {
-    std::vector<uint8_t> challenge = request.body.Challenge;
+inline EncryptionResponse generate_encryption_response(const PacketClientMsg& packet) {
+    Msg<SteamInternal::Internal::MsgChannelEncryptRequest> request(packet);
+    std::vector<uint8_t> challenge = request.Payload();
     std::vector<uint8_t> aes_key = generate_random_bytes(32);
+
+    RUNTIME_ASSERT(request.Body.protocolVersion == 1, "Encryption handshake protocol version mismatch!");
+    RUNTIME_ASSERTF(request.Body.universe == SteamInternal::EUniverse::Public, "Expected public universe, but got {}",static_cast<int>(request.Body.universe));
+    RUNTIME_ASSERT(challenge.size() == 16, "Encryption handshake must be 16 bytes!");
 
     std::vector<uint8_t> handshake = aes_key;
     handshake.insert(
@@ -126,7 +136,7 @@ inline EncryptionResponse generate_encryption_response(const TypedMsg<MsgChannel
     std::vector<uint8_t> encrypted_key_vector = rsa_oaep_sha1_encrypt_little_endian(getSteamPublicKey(),handshake);
     std::vector<uint8_t> hash_bytes = crc_to_little_endian(crc32_hash(encrypted_key_vector));
 
-    TypedMsg<MsgChannelEncryptResponse> response;
+    Msg<SteamInternal::Internal::MsgChannelEncryptResponse> response;
     std::vector<uint8_t> payload = encrypted_key_vector;
     payload.insert(
         payload.end(),
@@ -134,7 +144,7 @@ inline EncryptionResponse generate_encryption_response(const TypedMsg<MsgChannel
         hash_bytes.end()
     );
     payload.insert(payload.end(), {0,0,0,0});
-    response.body.set_payload(payload);
+    response.WriteBytes(payload);
 
     return EncryptionResponse{response,aes_key};
 }

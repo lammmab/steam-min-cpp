@@ -11,6 +11,9 @@
 #include <thread>
 
 #include "base/packetbase.h"
+#include "base/msgbase.h"
+
+#include "network/tasks/encryption.h"
 
 class CMClient: public medooze::EventEmitter {
 public:
@@ -50,10 +53,11 @@ private:
         return true;
     }
 
-    /*
-    void send_msg_proto(const MsgProto& msg);
-    void send_msg(const Msg& msg);
-    */
+    
+    //void send_msg_proto(const MsgProto& msg);
+    template<typename TBody>
+    void send_msg(const Msg<TBody>& msg);
+    
 
     void rcv_msg_proto(const PacketClientMsgProtobuf& msg);
     void rcv_msg(const PacketClientMsg& msg);

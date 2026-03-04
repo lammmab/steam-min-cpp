@@ -35,8 +35,6 @@ void CMClient::consume_frame(std::vector<uint8_t> frame) {
             emit(*raw);
         }
 
-        emit(std::move(packet));
-
     } catch (const std::exception& e) {
         spdlog::error("Failed to parse frame (EMsg: {}): {}", emsg, e.what());
     }
@@ -72,7 +70,9 @@ void CMClient::rcv_msg(const PacketClientMsg& msg) {
     // 2. generate_encryption_response(ChannelEncryptRequest)
     // 3. send response and store key
     if (msg.MsgType() == SteamInternal::EMsg::ChannelEncryptRequest) { 
-        spdlog::info("Received encryption request");
+        spdlog::info("Handling encryption request");
+        EncryptionResponse response = generate_encryption_response(msg);
+        send_msg(response.msg);
     }
 }
 
@@ -103,27 +103,16 @@ void CMClient::send_msg_proto(const MsgProto& msg) {
 
     spdlog::info("Sending message (EMsg: {}, total size: {})", msg.emsg, buffer.size());
     connection_->async_send(buffer);
-}
-
-void CMClient::send_msg(const Msg& msg)
-{
-    std::vector<uint8_t> buffer;
-
-    buffer.resize(4);
-    uint32_t emsg_le = msg.emsg;
-
-    buffer.insert(buffer.end(),
-        reinterpret_cast<uint8_t*>(&emsg_le),
-        reinterpret_cast<uint8_t*>(&emsg_le) + 4);
-
-    buffer.insert(buffer.end(), msg.payload.begin(), msg.payload.end());
-
-    uint32_t msg_len = static_cast<uint32_t>(buffer.size() - 4);
-    std::memcpy(buffer.data(), &msg_len, 4);
-
-    spdlog::info("Sending RAW message (EMsg: {}, total size: {})", msg.emsg, buffer.size());
-    connection_->async_send(buffer);
 }*/
+
+template<typename TBody>
+void CMClient::send_msg(const Msg<TBody>& msg)
+{
+    auto buffer = msg.Serialize();
+
+    spdlog::info("Sending RAW message (size: {}), (EMsg: {})", buffer.size(), static_cast<uint32_t>(msg.Body.GetEMSG()));
+    connection_->async_send(buffer);
+}
 
 void CMClient::shutdown() {
     if (connection_ && connection_->is_connected())
