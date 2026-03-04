@@ -117,14 +117,15 @@ struct EncryptionResponse {
 // 7. Make a final array / append to the response payload in THIS ORDER:
 // 8. the encrypted vector array, the crc32 hash key, 4 nil bytes of padding
 
-inline EncryptionResponse generate_encryption_response(const PacketClientMsg& packet) {
+// https://github.com/SteamRE/SteamKit/blob/master/SteamKit2/SteamKit2/Networking/Steam3/EnvelopeEncryptedConnection.cs#L131
+inline EncryptionResponse generate_encryption_response(const PacketMsg& packet) {
     Msg<SteamInternal::Internal::MsgChannelEncryptRequest> request(packet);
     std::vector<uint8_t> challenge = request.Payload();
     std::vector<uint8_t> aes_key = generate_random_bytes(32);
 
     RUNTIME_ASSERT(request.Body.protocolVersion == 1, "Encryption handshake protocol version mismatch!");
     RUNTIME_ASSERTF(request.Body.universe == SteamInternal::EUniverse::Public, "Expected public universe, but got {}",static_cast<int>(request.Body.universe));
-    RUNTIME_ASSERT(challenge.size() == 16, "Encryption handshake must be 16 bytes!");
+    RUNTIME_ASSERTF(challenge.size() >= 16, "Expected 16+ byte handshake, but got {} bytes",static_cast<int>(challenge.size()));
 
     std::vector<uint8_t> handshake = aes_key;
     handshake.insert(
@@ -144,7 +145,9 @@ inline EncryptionResponse generate_encryption_response(const PacketClientMsg& pa
         hash_bytes.end()
     );
     payload.insert(payload.end(), {0,0,0,0});
+    spdlog::info("Writing {} bytes to EncryptionResponse",payload.size());
     response.WriteBytes(payload);
+    spdlog::info("Response size: {}", response.Payload().size());
 
     return EncryptionResponse{response,aes_key};
 }

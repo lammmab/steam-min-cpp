@@ -51,7 +51,7 @@ public:
     {
         Stream s(payload,StreamingMode::Read);
         header.Deserialize(s);
-        bodyOffset = 0;
+        bodyOffset = s.Position();
     }
 
     bool IsProto() const override { return false; }

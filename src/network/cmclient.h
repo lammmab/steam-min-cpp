@@ -34,10 +34,6 @@ public:
         return connection_->is_connected();
     }
     
-    std::vector<uint8_t> channel_key;
-    std::vector<uint8_t> channel_hmac;
-    const size_t header_size = 8;
-
 private:
 
     void consume_frame(std::vector<uint8_t> frame);
@@ -60,7 +56,7 @@ private:
     
 
     void rcv_msg_proto(const PacketClientMsgProtobuf& msg);
-    void rcv_msg(const PacketClientMsg& msg);
+    void rcv_msg(const PacketMsg& msg);
 
 
     void setup_handlers();

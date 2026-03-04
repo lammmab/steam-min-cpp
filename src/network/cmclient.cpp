@@ -31,7 +31,7 @@ void CMClient::consume_frame(std::vector<uint8_t> frame) {
             auto proto = std::make_unique<PacketClientMsgProtobuf>(static_cast<SteamInternal::EMsg>(emsg), frame);
             emit(*proto);
         } else {
-            auto raw   = std::make_unique<PacketClientMsg>(static_cast<SteamInternal::EMsg>(emsg), frame);
+            auto raw   = std::make_unique<PacketMsg>(static_cast<SteamInternal::EMsg>(emsg), frame);
             emit(*raw);
         }
 
@@ -45,7 +45,7 @@ void CMClient::setup_handlers() {
         rcv_msg_proto(msg);
     });
 
-    on<PacketClientMsg>([this](const PacketClientMsg& msg) {
+    on<PacketMsg>([this](const PacketMsg& msg) {
         rcv_msg(msg);
     });
 }
@@ -60,7 +60,7 @@ void CMClient::rcv_msg_proto(const PacketClientMsgProtobuf& msg) {
                  msg.payload.size() > 3 ? msg.payload[3] : 0);
 }
 
-void CMClient::rcv_msg(const PacketClientMsg& msg) {
+void CMClient::rcv_msg(const PacketMsg& msg) {
     spdlog::info("Received raw Msg (EMsg: {})", static_cast<uint32_t>(msg.MsgType()));
     spdlog::info("Payload size: {}", msg.payload.size());
     spdlog::info("Body starts at offset: {}", msg.bodyOffset);

@@ -58,12 +58,16 @@ public:
 
     std::vector<byte> Serialize() const override 
     {
+        spdlog::info("Serializing this EMsg: {}",static_cast<uint32_t>(MsgType()));
         Stream stream(StreamingMode::Write);
 
         Header.Serialize(stream);
+        spdlog::info("Serialized header, now {} bytes",stream.Length());
         Body.Serialize(stream);
-
+        spdlog::info("Serialized body, now {} bytes",stream.Length());
         stream.Write(Payload().data(), Payload().size());
+        spdlog::info("Payload length: {}", Payload().size());
+        spdlog::info("Serialized final payload, now {} bytes",stream.Length());
 
         return stream.MoveBuffer();
     }
