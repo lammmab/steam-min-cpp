@@ -1,4 +1,5 @@
 #include "connection.h"
+#include <spdlog/fmt/bin_to_hex.h>
 
 uint32_t parse_message_length(const std::array<uint8_t, 8>& buffer) {
     if (buffer.size() < 4) {
@@ -146,8 +147,10 @@ void TCPConnection::async_send(std::vector<uint8_t> data)
     // 3. Append the data
     buffer.insert(buffer.end(), data.begin(), data.end());
 
+    spdlog::info("Sending this ENTIRE Buffer hex: {:spn}", spdlog::to_hex(buffer));
     bool write_in_progress = !write_queue_.empty();
     write_queue_.push_back(std::move(buffer));
+    
 
     if (!write_in_progress)
         do_write();

@@ -3,7 +3,9 @@
 #include <string>
 #include <memory>
 #include <exception>
+
 #include <spdlog/spdlog.h>
+
 #include <cstdint>
 #include <vector>
 

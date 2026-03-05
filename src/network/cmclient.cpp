@@ -65,14 +65,11 @@ void CMClient::rcv_msg(const PacketMsg& msg) {
     spdlog::info("Payload size: {}", msg.payload.size());
     spdlog::info("Body starts at offset: {}", msg.bodyOffset);
 
-    // TODO: handle encryption request
-    // 1. Convert to proper ChannelEncryptRequest from SteamLanguageInternal.h
-    // 2. generate_encryption_response(ChannelEncryptRequest)
-    // 3. send response and store key
     try {
-        EncryptionResponse response = generate_encryption_response(msg);
+        Msg<SteamInternal::Internal::MsgChannelEncryptResponse> response = generate_encryption_response(msg);
         spdlog::info("Sending encryption response");
-        send_msg(response.msg);
+        spdlog::info("Response size (CMCLIENT): {}", response.Payload().size());
+        send_msg(response);
     } catch (const std::exception& e) {
         spdlog::error("Failed to generate/send encryption response: {}", e.what());
     }
