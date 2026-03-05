@@ -2,18 +2,19 @@
 
 ## About
 
-A port of the Python SteamClient to be C++.
-This will not include most of the logic, just enough for my remake of
-ACCELA-min to C++ with GUI.
+Minimal Steam connections written in C++.This includes logic for:
+- Connecting to a Steam CM server
+- Logging in as an anonymous user
+- Getting product details given a product ID
+
+It is built to support future contributions extending the client to support other Steam server features.
 
 ## Requirements
 
 - libcurl
 - protobuf
 
-## Building
-
-### Step 1: Cross Platform
+## Building
 
 1. Clone the repo
 ```bash
@@ -35,8 +36,12 @@ mkdir build
 cd build
 ```
 
-### Step 2: Platform-specific
+5. Configure the build system
+```bash
+cmake ..
+```
 
-#### Linux:
-
-1.
+6. Build the project
+```bash
+make
+```
