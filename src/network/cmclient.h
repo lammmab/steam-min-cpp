@@ -63,6 +63,8 @@ private:
 
     void setup_handlers();
 
+    std::vector<uint8_t> encryption_key_ = {0};
     bool channel_secured_ = false;
     std::unique_ptr<TCPConnection> connection_;
+    
 };

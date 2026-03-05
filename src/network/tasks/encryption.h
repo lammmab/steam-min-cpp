@@ -118,22 +118,25 @@ struct EncryptionResponse {
 // 8. the encrypted vector array, the crc32 hash key, 4 nil bytes of padding
 
 // https://github.com/SteamRE/SteamKit/blob/master/SteamKit2/SteamKit2/Networking/Steam3/EnvelopeEncryptedConnection.cs#L131
-inline Msg<SteamInternal::Internal::MsgChannelEncryptResponse> generate_encryption_response(const PacketMsg& packet) {
+inline Msg<SteamInternal::Internal::MsgChannelEncryptResponse> generate_encryption_response(
+    const PacketMsg& packet,
+    std::vector<uint8_t>& key_store_
+) {
     Msg<SteamInternal::Internal::MsgChannelEncryptRequest> request(packet);
-    const auto& payload = request.Payload();
+    std::vector<uint8_t> payload = request.Payload();
 
     std::vector<uint8_t> challenge(
         payload.begin() + 8,
         payload.end()
     ); // skip the 8 byte protocolVersion and universe
 
-    std::vector<uint8_t> aes_key = generate_random_bytes(32);
+    key_store_ = generate_random_bytes(32);
 
     RUNTIME_ASSERT(request.Body.protocolVersion == 1, "Encryption handshake protocol version mismatch!");
     RUNTIME_ASSERTF(request.Body.universe == SteamInternal::EUniverse::Public, "Expected public universe, but got {}",static_cast<int>(request.Body.universe));
     RUNTIME_ASSERTF(challenge.size() == 16, "Expected 16 byte handshake, but got {} bytes",static_cast<int>(challenge.size()));
 
-    std::vector<uint8_t> handshake = aes_key;
+    std::vector<uint8_t> handshake = key_store_;
     handshake.insert(
         handshake.end(),
         challenge.begin(),

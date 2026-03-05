@@ -61,17 +61,38 @@ void CMClient::rcv_msg_proto(const PacketClientMsgProtobuf& msg) {
 }
 
 void CMClient::rcv_msg(const PacketMsg& msg) {
-    spdlog::info("Received raw Msg (EMsg: {})", static_cast<uint32_t>(msg.MsgType()));
+    uint32_t emsg = static_cast<uint32_t>(msg.MsgType());
+    spdlog::info("Received raw Msg (EMsg: {})", emsg);
     spdlog::info("Payload size: {}", msg.payload.size());
     spdlog::info("Body starts at offset: {}", msg.bodyOffset);
 
     try {
-        Msg<SteamInternal::Internal::MsgChannelEncryptResponse> response = generate_encryption_response(msg);
-        spdlog::info("Sending encryption response");
-        spdlog::info("Response size (CMCLIENT): {}", response.Payload().size());
-        send_msg(response);
+        switch(msg.MsgType()) {
+            case SteamInternal::EMsg::ChannelEncryptRequest: {
+                Msg<SteamInternal::Internal::MsgChannelEncryptResponse> response = 
+                    generate_encryption_response(msg,encryption_key_);
+                spdlog::info("Sending encryption response");
+                spdlog::info("Response size (CMCLIENT): {}", response.Payload().size());
+                send_msg(response);
+                break;
+            }
+            case SteamInternal::EMsg::ChannelEncryptResult: {
+                Msg<SteamInternal::Internal::MsgChannelEncryptResult> res(msg);
+                if (res.Body.result == SteamInternal::EResult::OK) {
+                    spdlog::info("Channel secured");
+                    channel_secured_ = true;
+                } else {
+                    spdlog::info("Encryption handshake failed");
+                }
+                break;
+            } 
+            default: {
+                spdlog::info("No handling for msg (EMsg {}) implemented.", emsg);
+                break;
+            }
+        }
     } catch (const std::exception& e) {
-        spdlog::error("Failed to generate/send encryption response: {}", e.what());
+        spdlog::error("Failed to handle packet (EMsg {}): {}", emsg,e.what());
     }
 }
 
