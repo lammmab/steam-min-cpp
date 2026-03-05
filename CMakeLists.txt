@@ -49,15 +49,22 @@ CPMAddPackage(
         "protobuf_USE_PACKAGE_ABSL ON"
 )
 
+CPMAddPackage(
+	NAME          	cryptopp-cmake
+	GIT_REPOSITORY	"https://github.com/abdes/cryptopp-cmake.git"
+	GIT_TAG       	"CRYPTOPP_8_9_0"
+	OPTIONS       	"CRYPTOPP_BUILD_TESTING OFF" "CRYPTOPP_INSTALL OFF"
+)
+
 target_link_libraries(SteamClient PRIVATE protobuf::libprotobuf)
 target_include_directories(SteamClient PRIVATE ${protobuf_SOURCE_DIR}/src)
 
 target_link_libraries(SteamClient PRIVATE 
     spdlog::spdlog_header_only
     CURL::libcurl
-    #cryptopp::cryptopp
-    OpenSSL::SSL
-    OpenSSL::Crypto
+    cryptopp::cryptopp
+    #OpenSSL::SSL
+    #OpenSSL::Crypto
 )
 
 if(WIN32)

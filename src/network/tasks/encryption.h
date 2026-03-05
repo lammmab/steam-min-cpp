@@ -1,11 +1,11 @@
 #pragma once
 
-#include <openssl/rand.h>
-#include <openssl/rsa.h>
-#include <openssl/pem.h>
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
+#include <cryptopp/rsa.h>
+#include <cryptopp/osrng.h>
+#include <cryptopp/sha.h>
+#include <cryptopp/filters.h>
+#include <cryptopp/files.h>
+#include <cryptopp/crc.h>
 
 #include <vector>
 #include <cstdint>
@@ -17,35 +17,6 @@
 #include "base/clientmsg.h"
 
 #include "utils/err.h"
-
-inline static uint32_t crc32_hash(const std::vector<uint8_t>& data)
-{
-    uint32_t crc = 0xFFFFFFFF;
-
-    for (uint8_t b : data)
-    {
-        crc ^= b;
-        for (int i = 0; i < 8; ++i)
-        {
-            if (crc & 1)
-                crc = (crc >> 1) ^ 0xEDB88320;
-            else
-                crc >>= 1;
-        }
-    }
-
-    return crc ^ 0xFFFFFFFF;
-};
-
-inline static std::vector<uint8_t> crc_to_little_endian(uint32_t crc)
-{
-    return std::vector<uint8_t>{
-        static_cast<uint8_t>(crc & 0xFF),
-        static_cast<uint8_t>((crc >> 8) & 0xFF),
-        static_cast<uint8_t>((crc >> 16) & 0xFF),
-        static_cast<uint8_t>((crc >> 24) & 0xFF)
-    };
-};
 
 constexpr uint8_t STEAM_PUBLIC_KEY_DER[] = {
 0x30, 0x81, 0x9D, 0x30, 0x0D, 0x06, 0x09, 0x2A, 0x86, 0x48, 0x86, 0xF7, 0x0D, 0x01, 0x01, 0x01,
@@ -67,66 +38,68 @@ inline static std::vector<uint8_t> getSteamPublicKey() {
     );
 }
 
-inline static std::vector<uint8_t> rsa_oaep_sha1_encrypt(
-    const std::vector<uint8_t>& publicKeyDer,
+inline std::vector<uint8_t> rsa_encrypt_oaep_sha1(
+    const std::vector<uint8_t>& pubKeyDer,
     const std::vector<uint8_t>& plaintext)
 {
-    const unsigned char* p = publicKeyDer.data();
-    EVP_PKEY* pkey = d2i_PUBKEY(NULL, &p, (int)publicKeyDer.size());
-    if (!pkey) {
-        throw std::runtime_error("Failed to parse DER public key");
-    }
+    CryptoPP::RSA::PublicKey key;
+    CryptoPP::ByteQueue queue;
 
-    EVP_PKEY_CTX* ctx = EVP_PKEY_CTX_new(pkey, NULL);
-    if (!ctx) {
-        EVP_PKEY_free(pkey);
-        throw std::runtime_error("Failed to create EVP_PKEY_CTX");
-    }
+    queue.Put(pubKeyDer.data(), pubKeyDer.size());
+    queue.MessageEnd();
 
-    if (EVP_PKEY_encrypt_init(ctx) <= 0) {
-        EVP_PKEY_CTX_free(ctx);
-        EVP_PKEY_free(pkey);
-        throw std::runtime_error("EVP_PKEY_encrypt_init failed");
-    }
+    key.BERDecode(queue);
+    spdlog::info("Public key size: {}",key.GetModulus().BitCount());
 
-    if (EVP_PKEY_CTX_set_rsa_padding(ctx, RSA_PKCS1_OAEP_PADDING) <= 0) {
-        EVP_PKEY_CTX_free(ctx);
-        EVP_PKEY_free(pkey);
-        throw std::runtime_error("Failed to set OAEP padding");
-    }
+    CryptoPP::AutoSeededRandomPool rng;
+    CryptoPP::RSAES_OAEP_SHA_Encryptor encryptor(key);
 
-    size_t outlen = 0;
-    if (EVP_PKEY_encrypt(ctx, NULL, &outlen,
-                         plaintext.data(), plaintext.size()) <= 0)
-    {
-        EVP_PKEY_CTX_free(ctx);
-        EVP_PKEY_free(pkey);
-        throw std::runtime_error("Failed to determine output length");
-    }
+    std::vector<uint8_t> ciphertext;
 
-    std::vector<uint8_t> outbuf(outlen);
+    CryptoPP::ArraySource(
+        plaintext.data(),
+        plaintext.size(),
+        true,
+        new CryptoPP::PK_EncryptorFilter(
+            rng,
+            encryptor,
+            new CryptoPP::VectorSink(ciphertext)
+        )
+    );
 
-    if (EVP_PKEY_encrypt(ctx, outbuf.data(), &outlen,
-                         plaintext.data(), plaintext.size()) <= 0)
-    {
-        EVP_PKEY_CTX_free(ctx);
-        EVP_PKEY_free(pkey);
-        throw std::runtime_error("RSA OAEP encryption failed");
-    }
-
-    outbuf.resize(outlen);
-
-    EVP_PKEY_CTX_free(ctx);
-    EVP_PKEY_free(pkey);
-
-    return outbuf;
+    return ciphertext;
 }
 
-inline std::vector<uint8_t> generate_random_bytes(size_t length) {
+
+inline uint32_t crc32_hash(const std::vector<uint8_t>& data)
+{
+    CryptoPP::CRC32 crc;
+    crc.Update(data.data(), data.size());
+
+    uint32_t result;
+    crc.TruncatedFinal(reinterpret_cast<CryptoPP::byte*>(&result), sizeof(result));
+
+    return result;
+}
+
+inline static std::vector<uint8_t> crc_to_vector(uint32_t crc)
+{
+    std::vector<uint8_t> out = {
+        static_cast<uint8_t>(crc & 0xFF),
+        static_cast<uint8_t>((crc >> 8) & 0xFF),
+        static_cast<uint8_t>((crc >> 16) & 0xFF),
+        static_cast<uint8_t>((crc >> 24) & 0xFF)
+    };
+    return out;
+};
+
+inline std::vector<uint8_t> generate_random_bytes(size_t length)
+{
+    CryptoPP::AutoSeededRandomPool rng;
+
     std::vector<uint8_t> buffer(length);
-    if (RAND_bytes(buffer.data(), static_cast<int>(length)) != 1) {
-        throw std::runtime_error("OpenSSL RAND_bytes failed");
-    }
+    rng.GenerateBlock(buffer.data(), buffer.size());
+
     return buffer;
 }
 
@@ -147,12 +120,18 @@ struct EncryptionResponse {
 // https://github.com/SteamRE/SteamKit/blob/master/SteamKit2/SteamKit2/Networking/Steam3/EnvelopeEncryptedConnection.cs#L131
 inline Msg<SteamInternal::Internal::MsgChannelEncryptResponse> generate_encryption_response(const PacketMsg& packet) {
     Msg<SteamInternal::Internal::MsgChannelEncryptRequest> request(packet);
-    std::vector<uint8_t> challenge = request.Payload();
+    const auto& payload = request.Payload();
+
+    std::vector<uint8_t> challenge(
+        payload.begin() + 8,
+        payload.end()
+    ); // skip the 8 byte protocolVersion and universe
+
     std::vector<uint8_t> aes_key = generate_random_bytes(32);
 
     RUNTIME_ASSERT(request.Body.protocolVersion == 1, "Encryption handshake protocol version mismatch!");
     RUNTIME_ASSERTF(request.Body.universe == SteamInternal::EUniverse::Public, "Expected public universe, but got {}",static_cast<int>(request.Body.universe));
-    RUNTIME_ASSERTF(challenge.size() >= 16, "Expected 16+ byte handshake, but got {} bytes",static_cast<int>(challenge.size()));
+    RUNTIME_ASSERTF(challenge.size() == 16, "Expected 16 byte handshake, but got {} bytes",static_cast<int>(challenge.size()));
 
     std::vector<uint8_t> handshake = aes_key;
     handshake.insert(
@@ -161,19 +140,17 @@ inline Msg<SteamInternal::Internal::MsgChannelEncryptResponse> generate_encrypti
         challenge.end()
     ); // 48 bytes
     
-    std::vector<uint8_t> encrypted_key_vector = rsa_oaep_sha1_encrypt(getSteamPublicKey(),handshake);
-    std::vector<uint8_t> hash_bytes = crc_to_little_endian(crc32_hash(encrypted_key_vector));
-
+    std::vector<uint8_t> encrypted_key_vector = rsa_encrypt_oaep_sha1(getSteamPublicKey(),handshake);
+    uint32_t hash_bytes = crc32_hash(encrypted_key_vector);
+    spdlog::info("Encrypted ciphertext size: {}",encrypted_key_vector.size());
+    
     Msg<SteamInternal::Internal::MsgChannelEncryptResponse> response;
-    std::vector<uint8_t> payload = encrypted_key_vector;
-    payload.insert(
-        payload.end(),
-        hash_bytes.begin(),
-        hash_bytes.end()
-    );
-    payload.insert(payload.end(), {0,0,0,0});
-    spdlog::info("Writing {} bytes to EncryptionResponse",payload.size());
-    response.WriteBytes(payload);
+    
+    response.WriteBytes(encrypted_key_vector);
+    response.WriteBytes(crc_to_vector(hash_bytes));
+    response.WriteBytes({0,0,0,0});
+
+    spdlog::info("Wrote bytes to EncryptionResponse, full size: {}",response.Payload().size());
 
     return response;
 }

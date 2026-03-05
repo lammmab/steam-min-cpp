@@ -147,7 +147,7 @@ void TCPConnection::async_send(std::vector<uint8_t> data)
     // 3. Append the data
     buffer.insert(buffer.end(), data.begin(), data.end());
 
-    spdlog::info("Sending this ENTIRE Buffer hex: {:spn}", spdlog::to_hex(buffer));
+    spdlog::info("Sending this ENTIRE Buffer hex ({} bytes): {:spn}", buffer.size(), spdlog::to_hex(buffer));
     bool write_in_progress = !write_queue_.empty();
     write_queue_.push_back(std::move(buffer));
     
