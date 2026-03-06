@@ -3,8 +3,8 @@
 #include <vector>
 #include <cstdint>
 #include <memory>
-#include "base/generated/SteamLanguageInternal.h"
-#include "base/generated/Stream.h"
+#include "base/generated/SteamLanguageInternal.hpp"
+#include "base/generated/Stream.hpp"
 
 namespace Steam::Messaging::Packets {
     // Packet interface (read-only, header + payload) 

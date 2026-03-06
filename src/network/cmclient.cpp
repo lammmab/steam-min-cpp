@@ -1,4 +1,4 @@
-#include "network/cmclient.h"
+#include "network/cmclient.hpp"
 #include <iostream>
 
 
@@ -60,6 +60,7 @@ void Steam::Messaging::CMClient::rcv_msg_proto(const Steam::Messaging::Packets::
                  msg.payload.size() > 3 ? msg.payload[3] : 0);
 }
 
+// Receives a PacketMsg with the normal MsgHdr
 void Steam::Messaging::CMClient::rcv_msg(const Steam::Messaging::Packets::PacketMsg& msg) {
     uint32_t emsg = static_cast<uint32_t>(msg.MsgType());
     spdlog::info("Received raw Msg (EMsg: {})", emsg);
@@ -70,7 +71,7 @@ void Steam::Messaging::CMClient::rcv_msg(const Steam::Messaging::Packets::Packet
         switch(msg.MsgType()) {
             case Steam::Internal::Enums::EMsg::ChannelEncryptRequest: {
                 Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> response = 
-                    generate_encryption_response(msg,encryption_key_);
+                    crypto_.generate_encryption_response(msg);
                 spdlog::info("Sending encryption response");
                 spdlog::info("Response size (CMCLIENT): {}", response.Payload().size());
                 send_msg(response);

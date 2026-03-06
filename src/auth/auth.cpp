@@ -1,4 +1,4 @@
-#include "auth/auth.h"
+#include "auth/auth.hpp"
 
 void Steam::Authentication::Auth::logout() {
     // Stub for now

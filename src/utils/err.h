@@ -5,7 +5,10 @@
 #include <stdexcept>
 #include <sstream>
 #include <string>
-#include "utils/fmt/format.h"
+
+#include <cstdio>
+#include <cstdarg>
+
 
 namespace runtime_err
 {
@@ -30,6 +33,15 @@ namespace runtime_err
 
         throw std::runtime_error(oss.str());
     }
+
+    inline std::string format_string(const char* fmt, ...) {
+        char buffer[1024];
+        va_list args;
+        va_start(args, fmt);
+        std::vsnprintf(buffer, sizeof(buffer), fmt, args);
+        va_end(args);
+        return std::string(buffer);
+    }
 }
 
 /* Unconditional runtime failure */
@@ -45,10 +57,10 @@ namespace runtime_err
     } while (0)
 
 /* Assert with formatted message */
-#define RUNTIME_ASSERTF(expr, fmt_str, ...) \
+#define RUNTIME_ASSERTF(expr, fmt, ...) \
     do { \
         if (!(expr)) { \
-            auto _msg = fmt::format(fmt_str, __VA_ARGS__); \
+            auto _msg = ::runtime_err::format_string(fmt, __VA_ARGS__); \
             ::runtime_err::throw_error(#expr, _msg.c_str(), __FILE__, __LINE__, __func__); \
         } \
     } while (0)

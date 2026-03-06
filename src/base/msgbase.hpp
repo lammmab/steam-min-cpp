@@ -9,7 +9,7 @@
 #include <cstring>
 #include <optional>
 
-#include "base/generated/SteamLanguageInternal.h"
+#include "base/generated/SteamLanguageInternal.hpp"
 
 namespace Steam::Messaging::Messages {
     // Base message class for payload handling

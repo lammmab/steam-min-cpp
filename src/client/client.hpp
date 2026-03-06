@@ -3,8 +3,8 @@
 #include <vector>
 #include <unordered_map>
 #include <cstdint>
-#include "network/cmclient.h"
-#include "auth/auth.h"
+#include "network/cmclient.hpp"
+#include "auth/auth.hpp"
 
 namespace Steam {
     class SteamClient {

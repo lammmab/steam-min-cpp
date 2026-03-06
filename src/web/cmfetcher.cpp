@@ -1,4 +1,4 @@
-#include "web/cmfetcher.h"
+#include "web/cmfetcher.hpp"
 
 size_t Steam::Networking::Web::CMFetcher::curl_write_callback(void* contents, size_t size, size_t nmemb, void* userp) {
     size_t totalSize = size * nmemb;

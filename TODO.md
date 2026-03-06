@@ -1,7 +1,7 @@
 # To Do
 
 - Start using namespaces to not pollute global ✅
-- Create class for cryptography
+- Create class for cryptography ✅
 - is_protobuf_msg is wrong past inital encryption phase
 - handle protobuf msgs and multi msgs
 - implement anonymous_login

@@ -1,5 +1,5 @@
 #include "utils/event_emitter.h"
-#include "network/connection.h"
+#include "network/connection.hpp"
 #include <string>
 #include <memory>
 #include <exception>
@@ -12,10 +12,10 @@
 #include <atomic>
 #include <thread>
 
-#include "base/packetbase.h"
-#include "base/msgbase.h"
+#include "base/packetbase.hpp"
+#include "base/msgbase.hpp"
 
-#include "network/tasks/encryption.h"
+#include "crypto/crypto.hpp"
 
 namespace Steam::Messaging {
     class CMClient: public medooze::EventEmitter {
@@ -64,8 +64,8 @@ namespace Steam::Messaging {
 
         void setup_handlers();
 
-        std::vector<uint8_t> encryption_key_ = {0};
         bool channel_secured_ = false;
         std::unique_ptr<Steam::Networking::TCPConnection> connection_;  
+        Steam::Crypto::EncryptionManager crypto_;
     };
 }

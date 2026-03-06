@@ -8,8 +8,8 @@
 #include <vector>
 #include <iostream>
 
-#include "base/generated/Stream.h"
-#include "base/generated/SteamUtils.h"
+#include "base/generated/Stream.hpp"
+#include "base/generated/SteamUtils.hpp"
 #include "protogen/steammessages_base.pb.h"
 
 namespace Steam::Internal

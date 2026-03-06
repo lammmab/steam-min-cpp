@@ -10,7 +10,7 @@
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
-#include "web/cmfetcher.h"
+#include "web/cmfetcher.hpp"
 #include <spdlog/spdlog.h>
 #include <optional>
 
@@ -24,7 +24,6 @@ namespace Steam::Networking {
     class TCPConnection {
     public:
         TCPConnection(asio::io_context& ctx);
-        TCPConnection();
 
         ~TCPConnection();
 

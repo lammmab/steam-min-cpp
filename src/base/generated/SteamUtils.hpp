@@ -6,7 +6,7 @@
 #include <vector>
 #include <iostream>
 
-#include "base/generated/SteamLanguage.h"
+#include "base/generated/SteamLanguage.hpp"
 
 namespace Steam::MsgUtil
 {

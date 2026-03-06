@@ -1,6 +1,6 @@
 #include <iostream>
 #include <asio.hpp>
-#include "client/client.h"
+#include "client/client.hpp"
 
 int main() {
     asio::io_context io_ctx;

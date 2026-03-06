@@ -1,4 +1,4 @@
-#include "connection.h"
+#include "network/connection.hpp"
 #include <spdlog/fmt/bin_to_hex.h>
 
 uint32_t parse_message_length(const std::array<uint8_t, 8>& buffer) {
