@@ -10,27 +10,32 @@
 
 namespace Steam::MsgUtil
 {
-    static constexpr uint32_t ProtoMask = 0x80000000;
+    static constexpr uint32_t PROTO_MASK = 0x80000000;
 
-    inline uint32_t MakeMsg(Steam::Internal::Enums::EMsg msg, bool isProto)
+    inline uint32_t make_msg(Steam::Internal::Enums::EMsg msg, bool isProto)
     {
         uint32_t value = static_cast<uint32_t>(msg);
-        return isProto ? (value | ProtoMask) : value;
+        return isProto ? (value | PROTO_MASK) : value;
     }
 
-    inline Steam::Internal::Enums::EMsg GetMsg(uint32_t raw)
+    inline Steam::Internal::Enums::EMsg get_msg(uint32_t raw)
     {
-        return static_cast<Steam::Internal::Enums::EMsg>(raw & ~ProtoMask);
+        return static_cast<Steam::Internal::Enums::EMsg>(raw & ~PROTO_MASK);
     }
 
-    inline uint32_t MakeGCMsg(uint32_t msg, bool isProto)
+    inline uint32_t make_gc_msg(uint32_t msg, bool isProto)
     {
-        return isProto ? (msg | ProtoMask) : msg;
+        return isProto ? (msg | PROTO_MASK) : msg;
     }
 
-    inline uint32_t GetGCMsg(uint32_t raw)
+    inline uint32_t get_gc_msg(uint32_t raw)
     {
-        return raw & ~ProtoMask;
+        return raw & ~PROTO_MASK;
+    }
+
+    inline static bool is_protobuf_msg(uint32_t emsg)
+    {
+        return (emsg & PROTO_MASK) > 0;
     }
 }
 

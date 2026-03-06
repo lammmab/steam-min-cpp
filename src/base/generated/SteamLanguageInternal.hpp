@@ -353,13 +353,13 @@ namespace Steam::Internal
 			}
 			headerLength = protoData.size();
 
-			stream.Write((int)Steam::MsgUtil::MakeMsg(Msg, true));
+			stream.Write((int)Steam::MsgUtil::make_msg(Msg, true));
 			stream.Write(headerLength);
 		}
 
 		void Deserialize( Stream& stream )
 		{
-			Msg = (Steam::Internal::Enums::EMsg)Steam::MsgUtil::GetMsg(static_cast<uint32_t>(stream.Read<int32_t>()));
+			Msg = (Steam::Internal::Enums::EMsg)Steam::MsgUtil::get_msg(static_cast<uint32_t>(stream.Read<int32_t>()));
 			headerLength = (int32_t)stream.Read<int32_t>();
 			if (headerLength < 0) throw std::out_of_range("Negative length");
 			std::vector<uint8_t> buffer(headerLength);
@@ -400,13 +400,13 @@ namespace Steam::Internal
 			}
 			headerLength = protoData.size();
 
-			stream.Write(Steam::MsgUtil::MakeGCMsg(Msg, true));
+			stream.Write(Steam::MsgUtil::make_gc_msg(Msg, true));
 			stream.Write(headerLength);
 		}
 
 		void Deserialize( Stream& stream )
 		{
-			Msg = (uint32_t)Steam::MsgUtil::GetGCMsg(static_cast<uint32_t>(stream.Read<int32_t>()));
+			Msg = (uint32_t)Steam::MsgUtil::get_gc_msg(static_cast<uint32_t>(stream.Read<int32_t>()));
 			headerLength = (int32_t)stream.Read<int32_t>();
 			if (headerLength < 0) throw std::out_of_range("Negative length");
 			

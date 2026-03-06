@@ -40,7 +40,7 @@ namespace Steam::Messaging {
     private:
 
         void consume_frame(std::vector<uint8_t> frame);
-        inline bool is_protobuf_msg(uint32_t emsg_code) {
+        inline bool is_encryption_msg(uint32_t emsg_code) {
             if (
                 emsg_code == (uint32_t)Steam::Internal::Enums::EMsg::ChannelEncryptRequest ||
                 emsg_code == (uint32_t)Steam::Internal::Enums::EMsg::ChannelEncryptResponse ||

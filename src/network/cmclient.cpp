@@ -26,7 +26,7 @@ void Steam::Messaging::CMClient::consume_frame(std::vector<uint8_t> frame) {
     try {
         std::unique_ptr<Steam::Messaging::Packets::PacketMsg> packet;
 
-        if (is_protobuf_msg(emsg)) {
+        if (is_encryption_msg(emsg)) {
             auto proto = std::make_unique<Steam::Messaging::Packets::PacketClientMsgProtobuf>(static_cast<Steam::Internal::Enums::EMsg>(emsg), frame);
             emit(*proto);
         } else {
