@@ -25,7 +25,10 @@ namespace Steam::Crypto::Helpers {
         };
     }
 
-    inline std::vector<uint8_t> generate_random_bytes(size_t length,CryptoPP::AutoSeededRandomPool& rng)
+    inline std::vector<uint8_t> generate_random_bytes(
+        size_t length,
+        CryptoPP::AutoSeededRandomPool& rng
+    )
     {
         std::vector<uint8_t> buffer(length);
         rng.GenerateBlock(buffer.data(), buffer.size());

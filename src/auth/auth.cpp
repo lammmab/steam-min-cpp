@@ -1,10 +1,12 @@
 #include "auth/auth.hpp"
 
-void Steam::Authentication::Auth::logout() {
+using namespace Steam::Authentication;
+
+void Auth::logout() {
     // Stub for now
 }
 
-bool Steam::Authentication::Auth::anonymous_login() {
+bool Auth::anonymous_login() {
     // Also a stub, return false for now
     return false;
 }

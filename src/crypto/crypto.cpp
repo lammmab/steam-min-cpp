@@ -1,11 +1,13 @@
 #include "crypto/crypto.hpp"
 
+using namespace Steam::Messaging;
+
 // Generates the proper MsgChannelEncryptResponse with RSA OAEP SHA1 and CRC32
-Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> 
+ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> 
     Steam::Crypto::EncryptionManager::generate_encryption_response(
-        const Steam::Messaging::Packets::PacketMsg& packet
+        const Packets::PacketMsg& packet
 ) {
-    Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptRequest> request(packet);
+    ClientMessages::Msg<Steam::Internal::MsgChannelEncryptRequest> request(packet);
     std::vector<uint8_t> payload = request.Payload();
 
     std::vector<uint8_t> challenge(
@@ -27,7 +29,7 @@ Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse
     std::vector<uint8_t> encrypted_key_vector = Steam::Crypto::Helpers::rsa_encrypt_oaep_sha1(getSteamPublicKey(),handshake,rng_);
     uint32_t hash_bytes = Steam::Crypto::Helpers::crc32_hash(encrypted_key_vector);
     
-    Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> response;
+    ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> response;
     
     response.WriteBytes(encrypted_key_vector);
     response.WriteBytes(Steam::Crypto::Helpers::crc_to_vector(hash_bytes));
@@ -35,3 +37,4 @@ Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse
 
     return response;
 }
+

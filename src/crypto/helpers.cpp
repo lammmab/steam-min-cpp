@@ -1,6 +1,8 @@
 #include "crypto/helpers.hpp"
 
-uint32_t Steam::Crypto::Helpers::crc32_hash(const std::vector<uint8_t>& data)
+using namespace Steam::Crypto;
+
+uint32_t Helpers::crc32_hash(const std::vector<uint8_t>& data)
 {
     CryptoPP::CRC32 crc;
     crc.Update(data.data(), data.size());
@@ -11,7 +13,7 @@ uint32_t Steam::Crypto::Helpers::crc32_hash(const std::vector<uint8_t>& data)
     return result;
 }
 
-std::vector<uint8_t> Steam::Crypto::Helpers::rsa_encrypt_oaep_sha1(
+std::vector<uint8_t> Helpers::rsa_encrypt_oaep_sha1(
     const std::vector<uint8_t>& pubKeyDer,
     const std::vector<uint8_t>& plaintext,
     CryptoPP::AutoSeededRandomPool& rng

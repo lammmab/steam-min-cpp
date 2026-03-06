@@ -22,7 +22,6 @@ namespace Steam::Crypto {
         0xE9, 0x63, 0xA2, 0xBB, 0x88, 0x19, 0x28, 0xE0, 0xE7, 0x14, 0xC0, 0x42, 0x89, 0x02, 0x01, 0x11
     };
 
-
     class EncryptionManager {
         public:
             EncryptionManager() 
@@ -43,6 +42,10 @@ namespace Steam::Crypto {
 
             Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> generate_encryption_response(
                 const Steam::Messaging::Packets::PacketMsg& packet
+            );
+
+            Steam::Messaging::Packets::IPacketMsg process_incoming_encrypted_message(
+                const std::vector<uint8_t>& frame
             );
 
         private:

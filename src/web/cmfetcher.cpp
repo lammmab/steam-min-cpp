@@ -1,13 +1,20 @@
 #include "web/cmfetcher.hpp"
 
-size_t Steam::Networking::Web::CMFetcher::curl_write_callback(void* contents, size_t size, size_t nmemb, void* userp) {
+using namespace Steam::Networking;
+
+size_t Web::CMFetcher::curl_write_callback(
+    void* contents, 
+    size_t size, 
+    size_t nmemb, 
+    void* userp
+) {
     size_t totalSize = size * nmemb;
     std::string* str = static_cast<std::string*>(userp);
     str->append(static_cast<char*>(contents), totalSize);
     return totalSize;
 }
 
-bool Steam::Networking::Web::CMFetcher::fetch_cm_servers() {
+bool Web::CMFetcher::fetch_cm_servers() {
     const std::string url =
         "https://api.steampowered.com/ISteamDirectory/GetCMListForConnect/v1/?cellid=0&cmtype=netfilter";
 
@@ -48,7 +55,7 @@ bool Steam::Networking::Web::CMFetcher::fetch_cm_servers() {
     return !servers_.empty();
 }
 
-std::vector<std::pair<std::string, int>> Steam::Networking::Web::CMFetcher::get_servers() {
+std::vector<std::pair<std::string, int>> Web::CMFetcher::get_servers() {
     std::lock_guard<std::mutex> lock(servers_mutex_);
     return servers_;
 }

@@ -1,6 +1,8 @@
 #include "network/tcp.hpp"
 #include <spdlog/fmt/bin_to_hex.h>
 
+using namespace Steam::Networking;
+
 uint32_t parse_message_length(const std::array<uint8_t, 8>& buffer) {
     if (buffer.size() < 4) {
         throw std::runtime_error("Buffer too small to parse length");
@@ -24,14 +26,14 @@ bool validate_magic(const std::array<uint8_t, 8>& buffer,const std::array<uint8_
     return true;
 }
 
-Steam::Networking::TCPConnection::TCPConnection(asio::io_context& ctx)
+TCPConnection::TCPConnection(asio::io_context& ctx)
     : socket_(ctx), ctx(ctx) {}
 
-Steam::Networking::TCPConnection::~TCPConnection() {
+TCPConnection::~TCPConnection() {
     if (is_connected()) network_close();
 }
 
-void Steam::Networking::TCPConnection::network_close()
+void TCPConnection::network_close()
 {
     if (state_ == ConnectionState::DISCONNECTED)
         return;
@@ -42,7 +44,7 @@ void Steam::Networking::TCPConnection::network_close()
     state_ = ConnectionState::DISCONNECTED;
 }
 
-void Steam::Networking::TCPConnection::network_connect()
+void TCPConnection::network_connect()
 {
     if (state_ != ConnectionState::DISCONNECTED)
         return;
@@ -75,7 +77,7 @@ void Steam::Networking::TCPConnection::network_connect()
         });
 }
 
-void Steam::Networking::TCPConnection::start_read_header()
+void TCPConnection::start_read_header()
 {
     spdlog::info("TCPConnection: start_read_header() called");
     auto self = this;
@@ -102,7 +104,7 @@ void Steam::Networking::TCPConnection::start_read_header()
         });
 }
 
-void Steam::Networking::TCPConnection::start_read_body(uint32_t len)
+void TCPConnection::start_read_body(uint32_t len)
 {
     spdlog::info("TCPConnection: start_read_body() called with len {}", len);
     body_buffer_.resize(len);
@@ -128,7 +130,7 @@ void Steam::Networking::TCPConnection::start_read_body(uint32_t len)
         });
 }
 
-void Steam::Networking::TCPConnection::async_send(const std::vector<uint8_t>& data)
+void TCPConnection::async_send(const std::vector<uint8_t>& data)
 {
     uint32_t data_len = static_cast<uint32_t>(data.size());
     std::vector<uint8_t> buffer;
@@ -155,7 +157,7 @@ void Steam::Networking::TCPConnection::async_send(const std::vector<uint8_t>& da
     if (!write_in_progress)
         do_write();
 }
-void Steam::Networking::TCPConnection::do_write()
+void TCPConnection::do_write()
 {
     asio::async_write(socket_,
         asio::buffer(write_queue_.front()),
@@ -168,11 +170,11 @@ void Steam::Networking::TCPConnection::do_write()
         });
 }
 
-void Steam::Networking::TCPConnection::handle_disconnect(const std::string& reason) {
+void TCPConnection::handle_disconnect(const std::string& reason) {
     spdlog::error("TCP disconnected: {}", reason);
     network_close();
 }
 
-void Steam::Networking::TCPConnection::handle_disconnect(const std::error_code& ec) {
+void TCPConnection::handle_disconnect(const std::error_code& ec) {
     handle_disconnect(ec.message());
 }
