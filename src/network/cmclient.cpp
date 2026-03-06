@@ -1,7 +1,6 @@
 #include "network/cmclient.hpp"
 #include <iostream>
 
-
 // Connect via TCP, then start message loop
 void Steam::Messaging::CMClient::start_session() {
     try {

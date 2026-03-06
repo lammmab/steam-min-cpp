@@ -1,5 +1,5 @@
 #include "utils/event_emitter.h"
-#include "network/connection.hpp"
+#include "network/tcp.hpp"
 #include <string>
 #include <memory>
 #include <exception>

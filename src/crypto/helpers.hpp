@@ -34,5 +34,4 @@ namespace Steam::Crypto::Helpers {
         CryptoPP::AutoSeededRandomPool& rng
     );
     uint32_t crc32_hash(const std::vector<uint8_t>& data);
-
 }

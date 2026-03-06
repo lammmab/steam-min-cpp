@@ -38,6 +38,7 @@ namespace Steam {
         inline bool logged_on() const {
             return auth_.logged_in();
         };
+
     private:
         Steam::Messaging::CMClient network_;
         Steam::Authentication::Auth auth_;
