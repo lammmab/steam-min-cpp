@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.0...3.5)
 project(SteamClient LANGUAGES CXX)
 
 find_package(CURL REQUIRED)
-find_package(OpenSSL REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,8 +23,6 @@ FetchContent_Declare(
     GIT_TAG v1.12.0
 )
 FetchContent_MakeAvailable(spdlog)
-
-
 
 file(GLOB_RECURSE SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
