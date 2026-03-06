@@ -28,10 +28,10 @@ Steam::Networking::TCPConnection::TCPConnection(asio::io_context& ctx)
     : socket_(ctx), ctx(ctx) {}
 
 Steam::Networking::TCPConnection::~TCPConnection() {
-    if (is_connected()) close_tcp();
+    if (is_connected()) network_close();
 }
 
-void Steam::Networking::TCPConnection::close_tcp()
+void Steam::Networking::TCPConnection::network_close()
 {
     if (state_ == ConnectionState::DISCONNECTED)
         return;
@@ -42,7 +42,7 @@ void Steam::Networking::TCPConnection::close_tcp()
     state_ = ConnectionState::DISCONNECTED;
 }
 
-void Steam::Networking::TCPConnection::open_tcp()
+void Steam::Networking::TCPConnection::network_connect()
 {
     if (state_ != ConnectionState::DISCONNECTED)
         return;
@@ -116,9 +116,9 @@ void Steam::Networking::TCPConnection::start_read_body(uint32_t len)
             }
 
             spdlog::info("TCPConnection: body read {} bytes", bytes_transferred);
-            if (on_frame) {
+            if (on_frame_) {
                 spdlog::info("TCPConnection: emitting on_frame callback");
-                on_frame(body_buffer_);
+                on_frame_(body_buffer_);
             } else {
                 spdlog::warn("TCPConnection: on_frame callback is null");
             }
@@ -128,7 +128,7 @@ void Steam::Networking::TCPConnection::start_read_body(uint32_t len)
         });
 }
 
-void Steam::Networking::TCPConnection::async_send(std::vector<uint8_t> data)
+void Steam::Networking::TCPConnection::async_send(const std::vector<uint8_t>& data)
 {
     uint32_t data_len = static_cast<uint32_t>(data.size());
     std::vector<uint8_t> buffer;
@@ -170,7 +170,7 @@ void Steam::Networking::TCPConnection::do_write()
 
 void Steam::Networking::TCPConnection::handle_disconnect(const std::string& reason) {
     spdlog::error("TCP disconnected: {}", reason);
-    close_tcp();
+    network_close();
 }
 
 void Steam::Networking::TCPConnection::handle_disconnect(const std::error_code& ec) {

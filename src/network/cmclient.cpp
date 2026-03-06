@@ -4,13 +4,13 @@
 // Connect via TCP, then start message loop
 void Steam::Messaging::CMClient::start_session() {
     try {
-        connection_->on_frame = [this](std::vector<uint8_t> frame) {
+        connection_->set_on_frame([this](std::vector<uint8_t> frame) {
             consume_frame(frame);
-        };
+        });
 
         setup_handlers();
 
-        connection_->open_tcp();
+        connection_->network_connect();
         spdlog::info("Connected successfully.");
     } catch (const std::exception& e) {
         spdlog::error("Could not connect via TCP.");
@@ -112,7 +112,7 @@ void Steam::Messaging::CMClient::send_msg(const Steam::Messaging::ClientMessages
 
 void Steam::Messaging::CMClient::shutdown() {
     if (connection_ && connection_->is_connected())
-        connection_->close_tcp();
+        connection_->network_close();
     
-    spdlog::info("Closed TCP connection and CMClient successfully");
+    spdlog::info("Closed connection and CMClient successfully");
 }

@@ -1,5 +1,6 @@
+#pragma once
 #include "utils/event_emitter.h"
-#include "network/tcp.hpp"
+#include "network/connection.hpp"
 #include <string>
 #include <memory>
 #include <exception>
@@ -20,20 +21,20 @@
 namespace Steam::Messaging {
     class CMClient: public medooze::EventEmitter {
     public:
-        CMClient(asio::io_context& ctx)
-            : connection_(std::make_unique<Steam::Networking::TCPConnection>(ctx))
+        CMClient(std::unique_ptr<Steam::Networking::IConnection> connection)
+            : connection_(std::move(connection))
         {
             spdlog::info("Setup CMClient");
         }
 
         ~CMClient() 
         {
-            if (connection_ && connection_->is_connected()) connection_->close_tcp();
+            if (connection_ && connection_->is_connected()) connection_->network_close();
         }
 
         void start_session();
         void shutdown();
-        inline bool is_tcp_connected() const {
+        inline bool is_connected() const {
             return connection_->is_connected();
         }
         
@@ -65,7 +66,7 @@ namespace Steam::Messaging {
         void setup_handlers();
 
         bool channel_secured_ = false;
-        std::unique_ptr<Steam::Networking::TCPConnection> connection_;  
+        std::unique_ptr<Steam::Networking::IConnection> connection_;  
         Steam::Crypto::EncryptionManager crypto_;
     };
 }

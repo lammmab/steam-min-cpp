@@ -9,12 +9,12 @@
 namespace Steam {
     class SteamClient {
     public:
-        SteamClient(asio::io_context& ctx)
-            : network_(ctx) {}
+        SteamClient(std::unique_ptr<Steam::Networking::IConnection> connection)
+            : network_(std::move(connection)) {}
 
         ~SteamClient() {
             if (auth_.logged_in()) logout();
-            if (network_.is_tcp_connected()) disconnect();
+            if (network_.is_connected()) disconnect();
         }
 
         // TCP Connection / CMClient Delegation
@@ -25,7 +25,7 @@ namespace Steam {
             network_.shutdown();
         };
         inline bool is_connected() const {
-            return network_.is_tcp_connected();
+            return network_.is_connected();
         };
 
         // Authorization Delegation

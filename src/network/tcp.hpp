@@ -11,32 +11,32 @@
 #include <cstring>
 #include <stdexcept>
 #include "web/cmfetcher.hpp"
+#include "network/connection.hpp"
 #include <spdlog/spdlog.h>
 #include <optional>
 
 namespace Steam::Networking {
-    enum class ConnectionState{
-        DISCONNECTED,
-        CONNECTING,
-        CONNECTED
-    };
-
-    class TCPConnection {
+    class TCPConnection: public IConnection {
     public:
         TCPConnection(asio::io_context& ctx);
+        ~TCPConnection() override;
 
-        ~TCPConnection();
-
-        void open_tcp();
-        void close_tcp();
-
-        void async_send(std::vector<uint8_t> data);
-
-        inline bool is_connected() const {
-            return state_ == ConnectionState::CONNECTED;
+        inline ConnectionState state() const override {
+            return state_;
         }
-        std::function<void(std::vector<uint8_t>)> on_frame;
-        
+
+        void network_connect() override;
+        void network_close() override;
+
+        void async_send(const std::vector<uint8_t>& data) override;
+
+        void set_on_frame(
+            std::function<void(std::vector<uint8_t>)> handler
+        ) override
+        {
+            on_frame_ = std::move(handler);
+        }
+
     private:
         void start_read_header();
         void start_read_body(uint32_t length);
@@ -58,5 +58,7 @@ namespace Steam::Networking {
         asio::io_context& ctx;
         asio::ip::tcp::socket socket_;
         std::function<void(const std::vector<uint8_t>&)> wait_for_callback;
+        std::function<void(std::vector<uint8_t>)> on_frame_;
+        
     };
 }
