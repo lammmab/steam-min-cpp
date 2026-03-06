@@ -6,7 +6,7 @@
 #include <vector>
 #include <iostream>
 
-namespace SteamInternal
+namespace Steam::Internal::Enums
 {
 	enum class EMsg
 	{
@@ -3497,4 +3497,4 @@ namespace SteamInternal
 		Datagram = 7,
 		Max = 8,
 	};
-} // namespace SteamInternal
+} // namespace Steam::Internal::Enums

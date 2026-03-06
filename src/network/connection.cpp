@@ -24,14 +24,14 @@ bool validate_magic(const std::array<uint8_t, 8>& buffer,const std::array<uint8_
     return true;
 }
 
-TCPConnection::TCPConnection(asio::io_context& ctx)
+Steam::Networking::TCPConnection::TCPConnection(asio::io_context& ctx)
     : socket_(ctx), ctx(ctx) {}
 
-TCPConnection::~TCPConnection() {
+Steam::Networking::TCPConnection::~TCPConnection() {
     if (is_connected()) close_tcp();
 }
 
-void TCPConnection::close_tcp()
+void Steam::Networking::TCPConnection::close_tcp()
 {
     if (state_ == ConnectionState::DISCONNECTED)
         return;
@@ -42,7 +42,7 @@ void TCPConnection::close_tcp()
     state_ = ConnectionState::DISCONNECTED;
 }
 
-void TCPConnection::open_tcp()
+void Steam::Networking::TCPConnection::open_tcp()
 {
     if (state_ != ConnectionState::DISCONNECTED)
         return;
@@ -75,7 +75,7 @@ void TCPConnection::open_tcp()
         });
 }
 
-void TCPConnection::start_read_header()
+void Steam::Networking::TCPConnection::start_read_header()
 {
     spdlog::info("TCPConnection: start_read_header() called");
     auto self = this;
@@ -102,7 +102,7 @@ void TCPConnection::start_read_header()
         });
 }
 
-void TCPConnection::start_read_body(uint32_t len)
+void Steam::Networking::TCPConnection::start_read_body(uint32_t len)
 {
     spdlog::info("TCPConnection: start_read_body() called with len {}", len);
     body_buffer_.resize(len);
@@ -128,7 +128,7 @@ void TCPConnection::start_read_body(uint32_t len)
         });
 }
 
-void TCPConnection::async_send(std::vector<uint8_t> data)
+void Steam::Networking::TCPConnection::async_send(std::vector<uint8_t> data)
 {
     uint32_t data_len = static_cast<uint32_t>(data.size());
     std::vector<uint8_t> buffer;
@@ -155,7 +155,7 @@ void TCPConnection::async_send(std::vector<uint8_t> data)
     if (!write_in_progress)
         do_write();
 }
-void TCPConnection::do_write()
+void Steam::Networking::TCPConnection::do_write()
 {
     asio::async_write(socket_,
         asio::buffer(write_queue_.front()),
@@ -168,11 +168,11 @@ void TCPConnection::do_write()
         });
 }
 
-void TCPConnection::handle_disconnect(const std::string& reason) {
+void Steam::Networking::TCPConnection::handle_disconnect(const std::string& reason) {
     spdlog::error("TCP disconnected: {}", reason);
     close_tcp();
 }
 
-void TCPConnection::handle_disconnect(const std::error_code& ec) {
+void Steam::Networking::TCPConnection::handle_disconnect(const std::error_code& ec) {
     handle_disconnect(ec.message());
 }

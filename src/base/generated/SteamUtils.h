@@ -1,3 +1,4 @@
+// GPT
 #pragma once
 #include <cstdint>
 #include <cstddef>
@@ -7,19 +8,19 @@
 
 #include "base/generated/SteamLanguage.h"
 
-namespace MsgUtil
+namespace Steam::MsgUtil
 {
     static constexpr uint32_t ProtoMask = 0x80000000;
 
-    inline uint32_t MakeMsg(SteamInternal::EMsg msg, bool isProto)
+    inline uint32_t MakeMsg(Steam::Internal::Enums::EMsg msg, bool isProto)
     {
         uint32_t value = static_cast<uint32_t>(msg);
         return isProto ? (value | ProtoMask) : value;
     }
 
-    inline SteamInternal::EMsg GetMsg(uint32_t raw)
+    inline Steam::Internal::Enums::EMsg GetMsg(uint32_t raw)
     {
-        return static_cast<SteamInternal::EMsg>(raw & ~ProtoMask);
+        return static_cast<Steam::Internal::Enums::EMsg>(raw & ~ProtoMask);
     }
 
     inline uint32_t MakeGCMsg(uint32_t msg, bool isProto)

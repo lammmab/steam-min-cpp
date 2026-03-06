@@ -12,7 +12,7 @@
 #include "base/generated/SteamUtils.h"
 #include "protogen/steammessages_base.pb.h"
 
-namespace SteamInternal::Internal
+namespace Steam::Internal
 {
 	struct ISteamSerializable
 	{
@@ -23,12 +23,12 @@ namespace SteamInternal::Internal
 
 	struct ISteamSerializableHeader : public ISteamSerializable
 	{
-		virtual void SetEMsg( SteamInternal::EMsg msg ) = 0;
+		virtual void SetEMsg( Steam::Internal::Enums::EMsg msg ) = 0;
 	};
 
 	struct ISteamSerializableMessage : public ISteamSerializable
 	{
-		virtual SteamInternal::EMsg GetEMsg() const = 0;
+		virtual Steam::Internal::Enums::EMsg GetEMsg() const = 0;
 	};
 
 	struct IGCSerializableHeader : public ISteamSerializable
@@ -51,7 +51,7 @@ namespace SteamInternal::Internal
 		// Static size: 2
 		uint16_t payloadSize;
 		// Static size: 1
-		EUdpPacketType packetType;
+		Steam::Internal::Enums::EUdpPacketType packetType;
 		// Static size: 1
 		unsigned char flags;
 		// Static size: 4
@@ -73,7 +73,7 @@ namespace SteamInternal::Internal
 		{
 			magic = UdpHeader::MAGIC;
 			payloadSize = 0;
-			packetType = EUdpPacketType::Invalid;
+			packetType = Steam::Internal::Enums::EUdpPacketType::Invalid;
 			flags = 0;
 			sourceConnID = 512;
 			destConnID = 0;
@@ -105,7 +105,7 @@ namespace SteamInternal::Internal
 		{
 			magic = (uint32_t)stream.Read<int32_t>();
 			payloadSize = (uint16_t)stream.Read<int16_t>();
-			packetType = (EUdpPacketType)stream.Read<unsigned char>();
+			packetType = (Steam::Internal::Enums::EUdpPacketType)stream.Read<unsigned char>();
 			flags = (unsigned char)stream.Read<unsigned char>();
 			sourceConnID = (uint32_t)stream.Read<int32_t>();
 			destConnID = (uint32_t)stream.Read<int32_t>();
@@ -227,10 +227,10 @@ namespace SteamInternal::Internal
 	// Sequential layout struct (originally StructLayout.Sequential)
 	struct MsgHdr : public ISteamSerializableHeader
 	{
-		void SetEMsg(EMsg msg) { Msg = msg; }
+		void SetEMsg(Steam::Internal::Enums::EMsg msg) { Msg = msg; }
 
 		// Static size: 4
-		SteamInternal::EMsg Msg;
+		Steam::Internal::Enums::EMsg Msg;
 		// Static size: 8
 		uint64_t targetJobID;
 		// Static size: 8
@@ -238,7 +238,7 @@ namespace SteamInternal::Internal
 
 		MsgHdr()
 		{
-			Msg = SteamInternal::EMsg::Invalid;
+			Msg = Steam::Internal::Enums::EMsg::Invalid;
 			targetJobID = UINT64_MAX;
 			sourceJobID = UINT64_MAX;
 		}
@@ -254,7 +254,7 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			Msg = (SteamInternal::EMsg)stream.Read<int32_t>();
+			Msg = (Steam::Internal::Enums::EMsg)stream.Read<int32_t>();
 			targetJobID = (uint64_t)stream.Read<int64_t>();
 			sourceJobID = (uint64_t)stream.Read<int64_t>();
 		}
@@ -263,10 +263,10 @@ namespace SteamInternal::Internal
 	// Sequential layout struct (originally StructLayout.Sequential)
 	struct ExtendedClientMsgHdr : public ISteamSerializableHeader
 	{
-		void SetEMsg(SteamInternal::EMsg msg) { Msg = msg; }
+		void SetEMsg(Steam::Internal::Enums::EMsg msg) { Msg = msg; }
 
 		// Static size: 4
-		SteamInternal::EMsg Msg;
+		Steam::Internal::Enums::EMsg Msg;
 		// Static size: 1
 		unsigned char headerSize;
 		// Static size: 2
@@ -288,7 +288,7 @@ namespace SteamInternal::Internal
 
 		ExtendedClientMsgHdr()
 		{
-			Msg = SteamInternal::EMsg::Invalid;
+			Msg = Steam::Internal::Enums::EMsg::Invalid;
 			headerSize = 36;
 			headerVersion = 2;
 			targetJobID = UINT64_MAX;
@@ -314,7 +314,7 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			Msg = (SteamInternal::EMsg)stream.Read<int32_t>();
+			Msg = (Steam::Internal::Enums::EMsg)stream.Read<int32_t>();
 			headerSize = (unsigned char)stream.Read<unsigned char>();
 			headerVersion = (uint16_t)stream.Read<int16_t>();
 			targetJobID = (uint64_t)stream.Read<int64_t>();
@@ -328,10 +328,10 @@ namespace SteamInternal::Internal
 	// Sequential layout struct (originally StructLayout.Sequential)
 	struct MsgHdrProtoBuf : public ISteamSerializableHeader
 	{
-		void SetEMsg(SteamInternal::EMsg msg) { Msg = msg; }
+		void SetEMsg(Steam::Internal::Enums::EMsg msg) { Msg = msg; }
 
 		// Static size: 4
-		SteamInternal::EMsg Msg;
+		Steam::Internal::Enums::EMsg Msg;
 		// Static size: 4
 		mutable int32_t headerLength;
 		// Static size: 0
@@ -339,7 +339,7 @@ namespace SteamInternal::Internal
 
 		MsgHdrProtoBuf()
 		{
-			Msg = SteamInternal::EMsg::Invalid;
+			Msg = Steam::Internal::Enums::EMsg::Invalid;
 			headerLength = 0;
 			proto = CMsgProtoBufHeader();
 		}
@@ -353,13 +353,13 @@ namespace SteamInternal::Internal
 			}
 			headerLength = protoData.size();
 
-			stream.Write((int)MsgUtil::MakeMsg(Msg, true));
+			stream.Write((int)Steam::MsgUtil::MakeMsg(Msg, true));
 			stream.Write(headerLength);
 		}
 
 		void Deserialize( Stream& stream )
 		{
-			Msg = (SteamInternal::EMsg)MsgUtil::GetMsg(static_cast<uint32_t>(stream.Read<int32_t>()));
+			Msg = (Steam::Internal::Enums::EMsg)Steam::MsgUtil::GetMsg(static_cast<uint32_t>(stream.Read<int32_t>()));
 			headerLength = (int32_t)stream.Read<int32_t>();
 			if (headerLength < 0) throw std::out_of_range("Negative length");
 			std::vector<uint8_t> buffer(headerLength);
@@ -400,13 +400,13 @@ namespace SteamInternal::Internal
 			}
 			headerLength = protoData.size();
 
-			stream.Write(MsgUtil::MakeGCMsg(Msg, true));
+			stream.Write(Steam::MsgUtil::MakeGCMsg(Msg, true));
 			stream.Write(headerLength);
 		}
 
 		void Deserialize( Stream& stream )
 		{
-			Msg = (uint32_t)MsgUtil::GetGCMsg(static_cast<uint32_t>(stream.Read<int32_t>()));
+			Msg = (uint32_t)Steam::MsgUtil::GetGCMsg(static_cast<uint32_t>(stream.Read<int32_t>()));
 			headerLength = (int32_t)stream.Read<int32_t>();
 			if (headerLength < 0) throw std::out_of_range("Negative length");
 			
@@ -458,7 +458,7 @@ namespace SteamInternal::Internal
 
 	struct MsgClientJustStrings : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::Invalid; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::Invalid; }
 
 
 		MsgClientJustStrings()
@@ -478,14 +478,14 @@ namespace SteamInternal::Internal
 
 	struct MsgClientGenericResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::Invalid; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::Invalid; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 
 		MsgClientGenericResponse()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 		}
 
 		void Serialize(Stream& stream) const
@@ -497,24 +497,24 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgChannelEncryptRequest : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ChannelEncryptRequest; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ChannelEncryptRequest; }
 
 		static const  uint32_t PROTOCOL_VERSION = 1;
 		// Static size: 4
 		uint32_t protocolVersion;
 		// Static size: 4
-		EUniverse universe;
+		Steam::Internal::Enums::EUniverse universe;
 
 		MsgChannelEncryptRequest()
 		{
 			protocolVersion = MsgChannelEncryptRequest::PROTOCOL_VERSION;
-			universe = EUniverse::Invalid;
+			universe = Steam::Internal::Enums::EUniverse::Invalid;
 		}
 
 		void Serialize(Stream& stream) const
@@ -528,13 +528,13 @@ namespace SteamInternal::Internal
 		void Deserialize( Stream& stream )
 		{
 			protocolVersion = (uint32_t)stream.Read<int32_t>();
-			universe = (EUniverse)stream.Read<int32_t>();
+			universe = (Steam::Internal::Enums::EUniverse)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgChannelEncryptResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ChannelEncryptResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ChannelEncryptResponse; }
 
 		// Static size: 4
 		uint32_t protocolVersion;
@@ -564,14 +564,14 @@ namespace SteamInternal::Internal
 
 	struct MsgChannelEncryptResult : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ChannelEncryptResult; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ChannelEncryptResult; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 
 		MsgChannelEncryptResult()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 		}
 
 		void Serialize(Stream& stream) const
@@ -583,13 +583,13 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientLogon : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientLogon; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientLogon; }
 
 		static const  uint32_t ObfuscationMask = 0xBAADF00D;
 		static const  uint32_t CurrentProtocol = 65581;
@@ -636,7 +636,7 @@ namespace SteamInternal::Internal
 
 	struct MsgClientVACBanStatus : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientVACBanStatus; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientVACBanStatus; }
 
 		// Static size: 4
 		uint32_t numBans;
@@ -661,10 +661,10 @@ namespace SteamInternal::Internal
 
 	struct MsgClientAppUsageEvent : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientAppUsageEvent; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientAppUsageEvent; }
 
 		// Static size: 4
-		EAppUsageEvent appUsageEvent;
+		Steam::Internal::Enums::EAppUsageEvent appUsageEvent;
 		// Static size: 8
 		private:
 			uint64_t gameID;
@@ -676,7 +676,7 @@ namespace SteamInternal::Internal
 
 		MsgClientAppUsageEvent()
 		{
-			appUsageEvent = EAppUsageEvent::Unknown;
+			appUsageEvent = Steam::Internal::Enums::EAppUsageEvent::Unknown;
 			gameID = 0;
 			offline = 0;
 		}
@@ -692,7 +692,7 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			appUsageEvent = (EAppUsageEvent)stream.Read<int32_t>();
+			appUsageEvent = (Steam::Internal::Enums::EAppUsageEvent)stream.Read<int32_t>();
 			gameID = (uint64_t)stream.Read<int64_t>();
 			offline = (uint16_t)stream.Read<int16_t>();
 		}
@@ -700,10 +700,10 @@ namespace SteamInternal::Internal
 
 	struct MsgClientUpdateGuestPassesList : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientUpdateGuestPassesList; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientUpdateGuestPassesList; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 		// Static size: 4
 		int32_t countGuestPassesToGive;
 		// Static size: 4
@@ -711,7 +711,7 @@ namespace SteamInternal::Internal
 
 		MsgClientUpdateGuestPassesList()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 			countGuestPassesToGive = 0;
 			countGuestPassesToRedeem = 0;
 		}
@@ -727,7 +727,7 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			countGuestPassesToGive = (int32_t)stream.Read<int32_t>();
 			countGuestPassesToRedeem = (int32_t)stream.Read<int32_t>();
 		}
@@ -735,7 +735,7 @@ namespace SteamInternal::Internal
 
 	struct MsgClientP2PIntroducerMessage : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientP2PIntroducerMessage; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientP2PIntroducerMessage; }
 
 		// Static size: 8
 		private:
@@ -744,7 +744,7 @@ namespace SteamInternal::Internal
 			SteamID GetsteamID() const { return SteamID(steamID); }
 			void SetsteamID(const SteamID& val) { steamID = val.ConvertToUInt64(); }
 		// Static size: 4
-		EIntroducerRouting routingType;
+		Steam::Internal::Enums::EIntroducerRouting routingType;
 		// Static size: 1450
 		std::vector<unsigned char> data;
 		// Static size: 4
@@ -753,7 +753,7 @@ namespace SteamInternal::Internal
 		MsgClientP2PIntroducerMessage()
 		{
 			steamID = 0;
-			routingType = EIntroducerRouting::Unknown;
+			routingType = Steam::Internal::Enums::EIntroducerRouting::Unknown;
 			data = std::vector<unsigned char>(1450);
 			dataLen = 0;
 		}
@@ -771,7 +771,7 @@ namespace SteamInternal::Internal
 		void Deserialize( Stream& stream )
 		{
 			steamID = (uint64_t)stream.Read<int64_t>();
-			routingType = (EIntroducerRouting)stream.Read<int32_t>();
+			routingType = (Steam::Internal::Enums::EIntroducerRouting)stream.Read<int32_t>();
 			data = stream.ReadArray<unsigned char>(1450);
 			dataLen = (uint32_t)stream.Read<int32_t>();
 		}
@@ -779,7 +779,7 @@ namespace SteamInternal::Internal
 
 	struct MsgClientOGSBeginSession : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientOGSBeginSession; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientOGSBeginSession; }
 
 		// Static size: 1
 		unsigned char accountType;
@@ -823,10 +823,10 @@ namespace SteamInternal::Internal
 
 	struct MsgClientOGSBeginSessionResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientOGSBeginSessionResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientOGSBeginSessionResponse; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 		// Static size: 1
 		unsigned char collectingAny;
 		// Static size: 1
@@ -836,7 +836,7 @@ namespace SteamInternal::Internal
 
 		MsgClientOGSBeginSessionResponse()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 			collectingAny = 0;
 			collectingDetails = 0;
 			sessionId = 0;
@@ -854,7 +854,7 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			collectingAny = (unsigned char)stream.Read<unsigned char>();
 			collectingDetails = (unsigned char)stream.Read<unsigned char>();
 			sessionId = (uint64_t)stream.Read<int64_t>();
@@ -863,7 +863,7 @@ namespace SteamInternal::Internal
 
 	struct MsgClientOGSEndSession : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientOGSEndSession; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientOGSEndSession; }
 
 		// Static size: 8
 		uint64_t sessionId;
@@ -903,14 +903,14 @@ namespace SteamInternal::Internal
 
 	struct MsgClientOGSEndSessionResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientOGSEndSessionResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientOGSEndSessionResponse; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 
 		MsgClientOGSEndSessionResponse()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 		}
 
 		void Serialize(Stream& stream) const
@@ -922,13 +922,13 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientOGSWriteRow : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientOGSWriteRow; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientOGSWriteRow; }
 
 		// Static size: 8
 		uint64_t sessionId;
@@ -958,7 +958,7 @@ namespace SteamInternal::Internal
 
 	struct MsgClientGetFriendsWhoPlayGame : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientGetFriendsWhoPlayGame; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientGetFriendsWhoPlayGame; }
 
 		// Static size: 8
 		private:
@@ -987,10 +987,10 @@ namespace SteamInternal::Internal
 
 	struct MsgClientGetFriendsWhoPlayGameResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientGetFriendsWhoPlayGameResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientGetFriendsWhoPlayGameResponse; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 		// Static size: 8
 		private:
 			uint64_t gameId;
@@ -1002,7 +1002,7 @@ namespace SteamInternal::Internal
 
 		MsgClientGetFriendsWhoPlayGameResponse()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 			gameId = 0;
 			countFriends = 0;
 		}
@@ -1018,7 +1018,7 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			gameId = (uint64_t)stream.Read<int64_t>();
 			countFriends = (uint32_t)stream.Read<int32_t>();
 		}
@@ -1026,7 +1026,7 @@ namespace SteamInternal::Internal
 
 	struct MsgGSPerformHardwareSurvey : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::GSPerformHardwareSurvey; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::GSPerformHardwareSurvey; }
 
 		// Static size: 4
 		uint32_t flags;
@@ -1051,10 +1051,10 @@ namespace SteamInternal::Internal
 
 	struct MsgGSGetPlayStatsResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::GSGetPlayStatsResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::GSGetPlayStatsResponse; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 		// Static size: 4
 		int32_t rank;
 		// Static size: 4
@@ -1064,7 +1064,7 @@ namespace SteamInternal::Internal
 
 		MsgGSGetPlayStatsResponse()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 			rank = 0;
 			lifetimeConnects = 0;
 			lifetimeMinutesPlayed = 0;
@@ -1082,7 +1082,7 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			rank = (int32_t)stream.Read<int32_t>();
 			lifetimeConnects = (uint32_t)stream.Read<int32_t>();
 			lifetimeMinutesPlayed = (uint32_t)stream.Read<int32_t>();
@@ -1091,10 +1091,10 @@ namespace SteamInternal::Internal
 
 	struct MsgGSGetReputationResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::GSGetReputationResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::GSGetReputationResponse; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 		// Static size: 4
 		uint32_t reputationScore;
 		// Static size: 1
@@ -1110,7 +1110,7 @@ namespace SteamInternal::Internal
 
 		MsgGSGetReputationResponse()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 			reputationScore = 0;
 			banned = 0;
 			bannedIp = 0;
@@ -1134,7 +1134,7 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			reputationScore = (uint32_t)stream.Read<int32_t>();
 			banned = (unsigned char)stream.Read<unsigned char>();
 			bannedIp = (uint32_t)stream.Read<int32_t>();
@@ -1146,7 +1146,7 @@ namespace SteamInternal::Internal
 
 	struct MsgGSDeny : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::GSDeny; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::GSDeny; }
 
 		// Static size: 8
 		private:
@@ -1155,12 +1155,12 @@ namespace SteamInternal::Internal
 			SteamID GetsteamId() const { return SteamID(steamId); }
 			void SetsteamId(const SteamID& val) { steamId = val.ConvertToUInt64(); }
 		// Static size: 4
-		EDenyReason denyReason;
+		Steam::Internal::Enums::EDenyReason denyReason;
 
 		MsgGSDeny()
 		{
 			steamId = 0;
-			denyReason = EDenyReason::Unknown;
+			denyReason = Steam::Internal::Enums::EDenyReason::Unknown;
 		}
 
 		void Serialize(Stream& stream) const
@@ -1174,13 +1174,13 @@ namespace SteamInternal::Internal
 		void Deserialize( Stream& stream )
 		{
 			steamId = (uint64_t)stream.Read<int64_t>();
-			denyReason = (EDenyReason)stream.Read<int32_t>();
+			denyReason = (Steam::Internal::Enums::EDenyReason)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgGSApprove : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::GSApprove; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::GSApprove; }
 
 		// Static size: 8
 		private:
@@ -1209,7 +1209,7 @@ namespace SteamInternal::Internal
 
 	struct MsgGSKick : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::GSKick; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::GSKick; }
 
 		// Static size: 8
 		private:
@@ -1218,14 +1218,14 @@ namespace SteamInternal::Internal
 			SteamID GetsteamId() const { return SteamID(steamId); }
 			void SetsteamId(const SteamID& val) { steamId = val.ConvertToUInt64(); }
 		// Static size: 4
-		EDenyReason denyReason;
+		Steam::Internal::Enums::EDenyReason denyReason;
 		// Static size: 4
 		int32_t waitTilMapChange;
 
 		MsgGSKick()
 		{
 			steamId = 0;
-			denyReason = EDenyReason::Unknown;
+			denyReason = Steam::Internal::Enums::EDenyReason::Unknown;
 			waitTilMapChange = 0;
 		}
 
@@ -1241,14 +1241,14 @@ namespace SteamInternal::Internal
 		void Deserialize( Stream& stream )
 		{
 			steamId = (uint64_t)stream.Read<int64_t>();
-			denyReason = (EDenyReason)stream.Read<int32_t>();
+			denyReason = (Steam::Internal::Enums::EDenyReason)stream.Read<int32_t>();
 			waitTilMapChange = (int32_t)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgGSGetUserGroupStatus : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::GSGetUserGroupStatus; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::GSGetUserGroupStatus; }
 
 		// Static size: 8
 		private:
@@ -1286,7 +1286,7 @@ namespace SteamInternal::Internal
 
 	struct MsgGSGetUserGroupStatusResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::GSGetUserGroupStatusResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::GSGetUserGroupStatusResponse; }
 
 		// Static size: 8
 		private:
@@ -1301,16 +1301,16 @@ namespace SteamInternal::Internal
 			SteamID GetsteamIdGroup() const { return SteamID(steamIdGroup); }
 			void SetsteamIdGroup(const SteamID& val) { steamIdGroup = val.ConvertToUInt64(); }
 		// Static size: 4
-		EClanRelationship clanRelationship;
+		Steam::Internal::Enums::EClanRelationship clanRelationship;
 		// Static size: 4
-		EClanRank clanRank;
+		Steam::Internal::Enums::EClanRank clanRank;
 
 		MsgGSGetUserGroupStatusResponse()
 		{
 			steamIdUser = 0;
 			steamIdGroup = 0;
-			clanRelationship = EClanRelationship::None;
-			clanRank = EClanRank::None;
+			clanRelationship = Steam::Internal::Enums::EClanRelationship::None;
+			clanRank = Steam::Internal::Enums::EClanRank::None;
 		}
 
 		void Serialize(Stream& stream) const
@@ -1327,14 +1327,14 @@ namespace SteamInternal::Internal
 		{
 			steamIdUser = (uint64_t)stream.Read<int64_t>();
 			steamIdGroup = (uint64_t)stream.Read<int64_t>();
-			clanRelationship = (EClanRelationship)stream.Read<int32_t>();
-			clanRank = (EClanRank)stream.Read<int32_t>();
+			clanRelationship = (Steam::Internal::Enums::EClanRelationship)stream.Read<int32_t>();
+			clanRank = (Steam::Internal::Enums::EClanRank)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientJoinChat : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientJoinChat; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientJoinChat; }
 
 		// Static size: 8
 		private:
@@ -1368,7 +1368,7 @@ namespace SteamInternal::Internal
 
 	struct MsgClientChatEnter : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientChatEnter; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientChatEnter; }
 
 		// Static size: 8
 		private:
@@ -1383,7 +1383,7 @@ namespace SteamInternal::Internal
 			SteamID GetsteamIdFriend() const { return SteamID(steamIdFriend); }
 			void SetsteamIdFriend(const SteamID& val) { steamIdFriend = val.ConvertToUInt64(); }
 		// Static size: 4
-		EChatRoomType chatRoomType;
+		Steam::Internal::Enums::EChatRoomType chatRoomType;
 		// Static size: 8
 		private:
 			uint64_t steamIdOwner;
@@ -1399,7 +1399,7 @@ namespace SteamInternal::Internal
 		// Static size: 1
 		unsigned char chatFlags;
 		// Static size: 4
-		EChatRoomEnterResponse enterResponse;
+		Steam::Internal::Enums::EChatRoomEnterResponse enterResponse;
 		// Static size: 4
 		int32_t numMembers;
 
@@ -1407,11 +1407,11 @@ namespace SteamInternal::Internal
 		{
 			steamIdChat = 0;
 			steamIdFriend = 0;
-			chatRoomType = EChatRoomType::Unknown;
+			chatRoomType = Steam::Internal::Enums::EChatRoomType::Unknown;
 			steamIdOwner = 0;
 			steamIdClan = 0;
 			chatFlags = 0;
-			enterResponse = EChatRoomEnterResponse::Unknown;
+			enterResponse = Steam::Internal::Enums::EChatRoomEnterResponse::Unknown;
 			numMembers = 0;
 		}
 
@@ -1433,18 +1433,18 @@ namespace SteamInternal::Internal
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
 			steamIdFriend = (uint64_t)stream.Read<int64_t>();
-			chatRoomType = (EChatRoomType)stream.Read<int32_t>();
+			chatRoomType = (Steam::Internal::Enums::EChatRoomType)stream.Read<int32_t>();
 			steamIdOwner = (uint64_t)stream.Read<int64_t>();
 			steamIdClan = (uint64_t)stream.Read<int64_t>();
 			chatFlags = (unsigned char)stream.Read<unsigned char>();
-			enterResponse = (EChatRoomEnterResponse)stream.Read<int32_t>();
+			enterResponse = (Steam::Internal::Enums::EChatRoomEnterResponse)stream.Read<int32_t>();
 			numMembers = (int32_t)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientChatMsg : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientChatMsg; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientChatMsg; }
 
 		// Static size: 8
 		private:
@@ -1459,13 +1459,13 @@ namespace SteamInternal::Internal
 			SteamID GetsteamIdChatRoom() const { return SteamID(steamIdChatRoom); }
 			void SetsteamIdChatRoom(const SteamID& val) { steamIdChatRoom = val.ConvertToUInt64(); }
 		// Static size: 4
-		EChatEntryType chatMsgType;
+		Steam::Internal::Enums::EChatEntryType chatMsgType;
 
 		MsgClientChatMsg()
 		{
 			steamIdChatter = 0;
 			steamIdChatRoom = 0;
-			chatMsgType = EChatEntryType::Invalid;
+			chatMsgType = Steam::Internal::Enums::EChatEntryType::Invalid;
 		}
 
 		void Serialize(Stream& stream) const
@@ -1481,13 +1481,13 @@ namespace SteamInternal::Internal
 		{
 			steamIdChatter = (uint64_t)stream.Read<int64_t>();
 			steamIdChatRoom = (uint64_t)stream.Read<int64_t>();
-			chatMsgType = (EChatEntryType)stream.Read<int32_t>();
+			chatMsgType = (Steam::Internal::Enums::EChatEntryType)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientChatMemberInfo : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientChatMemberInfo; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientChatMemberInfo; }
 
 		// Static size: 8
 		private:
@@ -1496,12 +1496,12 @@ namespace SteamInternal::Internal
 			SteamID GetsteamIdChat() const { return SteamID(steamIdChat); }
 			void SetsteamIdChat(const SteamID& val) { steamIdChat = val.ConvertToUInt64(); }
 		// Static size: 4
-		EChatInfoType type;
+		Steam::Internal::Enums::EChatInfoType type;
 
 		MsgClientChatMemberInfo()
 		{
 			steamIdChat = 0;
-			type = EChatInfoType::Unknown;
+			type = Steam::Internal::Enums::EChatInfoType::Unknown;
 		}
 
 		void Serialize(Stream& stream) const
@@ -1515,13 +1515,13 @@ namespace SteamInternal::Internal
 		void Deserialize( Stream& stream )
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
-			type = (EChatInfoType)stream.Read<int32_t>();
+			type = (Steam::Internal::Enums::EChatInfoType)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientChatAction : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientChatAction; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientChatAction; }
 
 		// Static size: 8
 		private:
@@ -1536,13 +1536,13 @@ namespace SteamInternal::Internal
 			SteamID GetsteamIdUserToActOn() const { return SteamID(steamIdUserToActOn); }
 			void SetsteamIdUserToActOn(const SteamID& val) { steamIdUserToActOn = val.ConvertToUInt64(); }
 		// Static size: 4
-		EChatAction chatAction;
+		Steam::Internal::Enums::EChatAction chatAction;
 
 		MsgClientChatAction()
 		{
 			steamIdChat = 0;
 			steamIdUserToActOn = 0;
-			chatAction = EChatAction::Unknown;
+			chatAction = Steam::Internal::Enums::EChatAction::Unknown;
 		}
 
 		void Serialize(Stream& stream) const
@@ -1558,13 +1558,13 @@ namespace SteamInternal::Internal
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
 			steamIdUserToActOn = (uint64_t)stream.Read<int64_t>();
-			chatAction = (EChatAction)stream.Read<int32_t>();
+			chatAction = (Steam::Internal::Enums::EChatAction)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientChatActionResult : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientChatActionResult; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientChatActionResult; }
 
 		// Static size: 8
 		private:
@@ -1579,16 +1579,16 @@ namespace SteamInternal::Internal
 			SteamID GetsteamIdUserActedOn() const { return SteamID(steamIdUserActedOn); }
 			void SetsteamIdUserActedOn(const SteamID& val) { steamIdUserActedOn = val.ConvertToUInt64(); }
 		// Static size: 4
-		EChatAction chatAction;
+		Steam::Internal::Enums::EChatAction chatAction;
 		// Static size: 4
-		EChatActionResult actionResult;
+		Steam::Internal::Enums::EChatActionResult actionResult;
 
 		MsgClientChatActionResult()
 		{
 			steamIdChat = 0;
 			steamIdUserActedOn = 0;
-			chatAction = EChatAction::Unknown;
-			actionResult = EChatActionResult::Unknown;
+			chatAction = Steam::Internal::Enums::EChatAction::Unknown;
+			actionResult = Steam::Internal::Enums::EChatActionResult::Unknown;
 		}
 
 		void Serialize(Stream& stream) const
@@ -1605,14 +1605,14 @@ namespace SteamInternal::Internal
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
 			steamIdUserActedOn = (uint64_t)stream.Read<int64_t>();
-			chatAction = (EChatAction)stream.Read<int32_t>();
-			actionResult = (EChatActionResult)stream.Read<int32_t>();
+			chatAction = (Steam::Internal::Enums::EChatAction)stream.Read<int32_t>();
+			actionResult = (Steam::Internal::Enums::EChatActionResult)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientChatRoomInfo : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientChatRoomInfo; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientChatRoomInfo; }
 
 		// Static size: 8
 		private:
@@ -1621,12 +1621,12 @@ namespace SteamInternal::Internal
 			SteamID GetsteamIdChat() const { return SteamID(steamIdChat); }
 			void SetsteamIdChat(const SteamID& val) { steamIdChat = val.ConvertToUInt64(); }
 		// Static size: 4
-		EChatInfoType type;
+		Steam::Internal::Enums::EChatInfoType type;
 
 		MsgClientChatRoomInfo()
 		{
 			steamIdChat = 0;
-			type = EChatInfoType::Unknown;
+			type = Steam::Internal::Enums::EChatInfoType::Unknown;
 		}
 
 		void Serialize(Stream& stream) const
@@ -1640,13 +1640,13 @@ namespace SteamInternal::Internal
 		void Deserialize( Stream& stream )
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
-			type = (EChatInfoType)stream.Read<int32_t>();
+			type = (Steam::Internal::Enums::EChatInfoType)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientSetIgnoreFriend : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientSetIgnoreFriend; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientSetIgnoreFriend; }
 
 		// Static size: 8
 		private:
@@ -1689,7 +1689,7 @@ namespace SteamInternal::Internal
 
 	struct MsgClientSetIgnoreFriendResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientSetIgnoreFriendResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientSetIgnoreFriendResponse; }
 
 		// Static size: 8
 		private:
@@ -1698,12 +1698,12 @@ namespace SteamInternal::Internal
 			SteamID GetfriendId() const { return SteamID(friendId); }
 			void SetfriendId(const SteamID& val) { friendId = val.ConvertToUInt64(); }
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 
 		MsgClientSetIgnoreFriendResponse()
 		{
 			friendId = 0;
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 		}
 
 		void Serialize(Stream& stream) const
@@ -1717,16 +1717,16 @@ namespace SteamInternal::Internal
 		void Deserialize( Stream& stream )
 		{
 			friendId = (uint64_t)stream.Read<int64_t>();
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientLoggedOff : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientLoggedOff; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientLoggedOff; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 		// Static size: 4
 		int32_t secMinReconnectHint;
 		// Static size: 4
@@ -1734,7 +1734,7 @@ namespace SteamInternal::Internal
 
 		MsgClientLoggedOff()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 			secMinReconnectHint = 0;
 			secMaxReconnectHint = 0;
 		}
@@ -1750,7 +1750,7 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			secMinReconnectHint = (int32_t)stream.Read<int32_t>();
 			secMaxReconnectHint = (int32_t)stream.Read<int32_t>();
 		}
@@ -1758,10 +1758,10 @@ namespace SteamInternal::Internal
 
 	struct MsgClientLogOnResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientLogOnResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientLogOnResponse; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 		// Static size: 4
 		int32_t outOfGameHeartbeatRateSec;
 		// Static size: 4
@@ -1779,7 +1779,7 @@ namespace SteamInternal::Internal
 
 		MsgClientLogOnResponse()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 			outOfGameHeartbeatRateSec = 0;
 			inGameHeartbeatRateSec = 0;
 			clientSuppliedSteamId = 0;
@@ -1801,7 +1801,7 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			outOfGameHeartbeatRateSec = (int32_t)stream.Read<int32_t>();
 			inGameHeartbeatRateSec = (int32_t)stream.Read<int32_t>();
 			clientSuppliedSteamId = (uint64_t)stream.Read<int64_t>();
@@ -1812,20 +1812,20 @@ namespace SteamInternal::Internal
 
 	struct MsgClientServerUnavailable : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientServerUnavailable; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientServerUnavailable; }
 
 		// Static size: 8
 		uint64_t jobidSent;
 		// Static size: 4
 		uint32_t eMsgSent;
 		// Static size: 4
-		EServerType eServerTypeUnavailable;
+		Steam::Internal::Enums::EServerType eServerTypeUnavailable;
 
 		MsgClientServerUnavailable()
 		{
 			jobidSent = 0;
 			eMsgSent = 0;
-			eServerTypeUnavailable = EServerType::First;
+			eServerTypeUnavailable = Steam::Internal::Enums::EServerType::First;
 		}
 
 		void Serialize(Stream& stream) const
@@ -1841,16 +1841,16 @@ namespace SteamInternal::Internal
 		{
 			jobidSent = (uint64_t)stream.Read<int64_t>();
 			eMsgSent = (uint32_t)stream.Read<int32_t>();
-			eServerTypeUnavailable = (EServerType)stream.Read<int32_t>();
+			eServerTypeUnavailable = (Steam::Internal::Enums::EServerType)stream.Read<int32_t>();
 		}
 	};
 
 	struct MsgClientCreateChat : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientCreateChat; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientCreateChat; }
 
 		// Static size: 4
-		EChatRoomType chatRoomType;
+		Steam::Internal::Enums::EChatRoomType chatRoomType;
 		// Static size: 8
 		private:
 			uint64_t gameId;
@@ -1864,11 +1864,11 @@ namespace SteamInternal::Internal
 			SteamID GetsteamIdClan() const { return SteamID(steamIdClan); }
 			void SetsteamIdClan(const SteamID& val) { steamIdClan = val.ConvertToUInt64(); }
 		// Static size: 4
-		EChatPermission permissionOfficer;
+		Steam::Internal::Enums::EChatPermission permissionOfficer;
 		// Static size: 4
-		EChatPermission permissionMember;
+		Steam::Internal::Enums::EChatPermission permissionMember;
 		// Static size: 4
-		EChatPermission permissionAll;
+		Steam::Internal::Enums::EChatPermission permissionAll;
 		// Static size: 4
 		uint32_t membersMax;
 		// Static size: 1
@@ -1888,13 +1888,13 @@ namespace SteamInternal::Internal
 
 		MsgClientCreateChat()
 		{
-			chatRoomType = EChatRoomType::Unknown;
+			chatRoomType = Steam::Internal::Enums::EChatRoomType::Unknown;
 			gameId = 0;
 			steamIdClan = 0;
 			// These were 0; this may be completely incorrect now.
-			permissionOfficer = EChatPermission::OfficerDefault;
-			permissionMember = EChatPermission::MemberDefault;
-			permissionAll = EChatPermission::OwnerDefault;
+			permissionOfficer = Steam::Internal::Enums::EChatPermission::OfficerDefault;
+			permissionMember = Steam::Internal::Enums::EChatPermission::MemberDefault;
+			permissionAll = Steam::Internal::Enums::EChatPermission::OwnerDefault;
 			// End block
 			membersMax = 0;
 			chatFlags = 0;
@@ -1920,12 +1920,12 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			chatRoomType = (EChatRoomType)stream.Read<int32_t>();
+			chatRoomType = (Steam::Internal::Enums::EChatRoomType)stream.Read<int32_t>();
 			gameId = (uint64_t)stream.Read<int64_t>();
 			steamIdClan = (uint64_t)stream.Read<int64_t>();
-			permissionOfficer = (EChatPermission)stream.Read<int32_t>();
-			permissionMember = (EChatPermission)stream.Read<int32_t>();
-			permissionAll = (EChatPermission)stream.Read<int32_t>();
+			permissionOfficer = (Steam::Internal::Enums::EChatPermission)stream.Read<int32_t>();
+			permissionMember = (Steam::Internal::Enums::EChatPermission)stream.Read<int32_t>();
+			permissionAll = (Steam::Internal::Enums::EChatPermission)stream.Read<int32_t>();
 			membersMax = (uint32_t)stream.Read<int32_t>();
 			chatFlags = (unsigned char)stream.Read<unsigned char>();
 			steamIdFriendChat = (uint64_t)stream.Read<int64_t>();
@@ -1935,10 +1935,10 @@ namespace SteamInternal::Internal
 
 	struct MsgClientCreateChatResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientCreateChatResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientCreateChatResponse; }
 
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 		// Static size: 8
 		private:
 			uint64_t steamIdChat;
@@ -1946,7 +1946,7 @@ namespace SteamInternal::Internal
 			SteamID GetsteamIdChat() const { return SteamID(steamIdChat); }
 			void SetsteamIdChat(const SteamID& val) { steamIdChat = val.ConvertToUInt64(); }
 		// Static size: 4
-		EChatRoomType chatRoomType;
+		Steam::Internal::Enums::EChatRoomType chatRoomType;
 		// Static size: 8
 		private:
 			uint64_t steamIdFriendChat;
@@ -1956,9 +1956,9 @@ namespace SteamInternal::Internal
 
 		MsgClientCreateChatResponse()
 		{
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 			steamIdChat = 0;
-			chatRoomType = EChatRoomType::Unknown;
+			chatRoomType = Steam::Internal::Enums::EChatRoomType::Unknown;
 			steamIdFriendChat = 0;
 		}
 
@@ -1974,16 +1974,16 @@ namespace SteamInternal::Internal
 
 		void Deserialize( Stream& stream )
 		{
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
-			chatRoomType = (EChatRoomType)stream.Read<int32_t>();
+			chatRoomType = (Steam::Internal::Enums::EChatRoomType)stream.Read<int32_t>();
 			steamIdFriendChat = (uint64_t)stream.Read<int64_t>();
 		}
 	};
 
 	struct MsgClientMarketingMessageUpdate2 : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientMarketingMessageUpdate2; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientMarketingMessageUpdate2; }
 
 		// Static size: 4
 		uint32_t marketingMessageUpdateTime;
@@ -2013,7 +2013,7 @@ namespace SteamInternal::Internal
 
 	struct MsgClientGetLegacyGameKey : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientGetLegacyGameKey; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientGetLegacyGameKey; }
 
 		// Static size: 4
 		uint32_t appId;
@@ -2038,19 +2038,19 @@ namespace SteamInternal::Internal
 
 	struct MsgClientGetLegacyGameKeyResponse : public ISteamSerializableMessage
 	{
-		SteamInternal::EMsg GetEMsg() const { return SteamInternal::EMsg::ClientGetLegacyGameKeyResponse; }
+		Steam::Internal::Enums::EMsg GetEMsg() const { return Steam::Internal::Enums::EMsg::ClientGetLegacyGameKeyResponse; }
 
 		// Static size: 4
 		uint32_t appId;
 		// Static size: 4
-		EResult result;
+		Steam::Internal::Enums::EResult result;
 		// Static size: 4
 		uint32_t length;
 
 		MsgClientGetLegacyGameKeyResponse()
 		{
 			appId = 0;
-			result = EResult::Invalid;
+			result = Steam::Internal::Enums::EResult::Invalid;
 			length = 0;
 		}
 
@@ -2066,9 +2066,9 @@ namespace SteamInternal::Internal
 		void Deserialize( Stream& stream )
 		{
 			appId = (uint32_t)stream.Read<int32_t>();
-			result = (EResult)stream.Read<int32_t>();
+			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			length = (uint32_t)stream.Read<int32_t>();
 		}
 	};
 
-} // namespace SteamInternal::Internal
+} // namespace Steam::Internal

@@ -3,7 +3,7 @@
 
 
 // Connect via TCP, then start message loop
-void CMClient::start_session() {
+void Steam::Messaging::CMClient::start_session() {
     try {
         connection_->on_frame = [this](std::vector<uint8_t> frame) {
             consume_frame(frame);
@@ -19,19 +19,19 @@ void CMClient::start_session() {
 }
 
 // Start consuming TCP messages
-void CMClient::consume_frame(std::vector<uint8_t> frame) {
+void Steam::Messaging::CMClient::consume_frame(std::vector<uint8_t> frame) {
     if (frame.size() < 4) return;
 
     uint32_t emsg = frame[0] | (frame[1] << 8) | (frame[2] << 16) | (frame[3] << 24);
 
     try {
-        std::unique_ptr<PacketMsg> packet;
+        std::unique_ptr<Steam::Messaging::Packets::PacketMsg> packet;
 
         if (is_protobuf_msg(emsg)) {
-            auto proto = std::make_unique<PacketClientMsgProtobuf>(static_cast<SteamInternal::EMsg>(emsg), frame);
+            auto proto = std::make_unique<Steam::Messaging::Packets::PacketClientMsgProtobuf>(static_cast<Steam::Internal::Enums::EMsg>(emsg), frame);
             emit(*proto);
         } else {
-            auto raw   = std::make_unique<PacketMsg>(static_cast<SteamInternal::EMsg>(emsg), frame);
+            auto raw   = std::make_unique<Steam::Messaging::Packets::PacketMsg>(static_cast<Steam::Internal::Enums::EMsg>(emsg), frame);
             emit(*raw);
         }
 
@@ -40,17 +40,17 @@ void CMClient::consume_frame(std::vector<uint8_t> frame) {
     }
 }
 
-void CMClient::setup_handlers() {
-    on<PacketClientMsgProtobuf>([this](const PacketClientMsgProtobuf& msg) {
+void Steam::Messaging::CMClient::setup_handlers() {
+    on<Steam::Messaging::Packets::PacketClientMsgProtobuf>([this](const Steam::Messaging::Packets::PacketClientMsgProtobuf& msg) {
         rcv_msg_proto(msg);
     });
 
-    on<PacketMsg>([this](const PacketMsg& msg) {
+    on<Steam::Messaging::Packets::PacketMsg>([this](const Steam::Messaging::Packets::PacketMsg& msg) {
         rcv_msg(msg);
     });
 }
 
-void CMClient::rcv_msg_proto(const PacketClientMsgProtobuf& msg) {
+void Steam::Messaging::CMClient::rcv_msg_proto(const Steam::Messaging::Packets::PacketClientMsgProtobuf& msg) {
     spdlog::info("Received protobuf Msg (EMsg: {})", static_cast<uint32_t>(msg.MsgType()));
     spdlog::info("Payload size: {}", msg.payload.size());
     spdlog::info("Payload preview: {:02X} {:02X} {:02X} {:02X}", 
@@ -60,7 +60,7 @@ void CMClient::rcv_msg_proto(const PacketClientMsgProtobuf& msg) {
                  msg.payload.size() > 3 ? msg.payload[3] : 0);
 }
 
-void CMClient::rcv_msg(const PacketMsg& msg) {
+void Steam::Messaging::CMClient::rcv_msg(const Steam::Messaging::Packets::PacketMsg& msg) {
     uint32_t emsg = static_cast<uint32_t>(msg.MsgType());
     spdlog::info("Received raw Msg (EMsg: {})", emsg);
     spdlog::info("Payload size: {}", msg.payload.size());
@@ -68,17 +68,17 @@ void CMClient::rcv_msg(const PacketMsg& msg) {
 
     try {
         switch(msg.MsgType()) {
-            case SteamInternal::EMsg::ChannelEncryptRequest: {
-                Msg<SteamInternal::Internal::MsgChannelEncryptResponse> response = 
+            case Steam::Internal::Enums::EMsg::ChannelEncryptRequest: {
+                Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> response = 
                     generate_encryption_response(msg,encryption_key_);
                 spdlog::info("Sending encryption response");
                 spdlog::info("Response size (CMCLIENT): {}", response.Payload().size());
                 send_msg(response);
                 break;
             }
-            case SteamInternal::EMsg::ChannelEncryptResult: {
-                Msg<SteamInternal::Internal::MsgChannelEncryptResult> res(msg);
-                if (res.Body.result == SteamInternal::EResult::OK) {
+            case Steam::Internal::Enums::EMsg::ChannelEncryptResult: {
+                Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResult> res(msg);
+                if (res.Body.result == Steam::Internal::Enums::EResult::OK) {
                     spdlog::info("Channel secured");
                     channel_secured_ = true;
                 } else {
@@ -97,36 +97,12 @@ void CMClient::rcv_msg(const PacketMsg& msg) {
 }
 
 /*
-void CMClient::send_msg_proto(const MsgProto& msg) {
-    std::vector<uint8_t> buffer;
-
-    buffer.resize(4);
-    uint32_t raw_emsg = msg.emsg | 0x80000000;
-    buffer.insert(buffer.end(),
-                reinterpret_cast<uint8_t*>(&raw_emsg),
-                reinterpret_cast<uint8_t*>(&raw_emsg) + 4);
-
-    size_t header_len = msg.header.ByteSizeLong();
-    std::vector<uint8_t> header_buf(header_len);
-    msg.header.SerializeToArray(header_buf.data(), static_cast<int>(header_len));
-
-    uint32_t header_len_le = static_cast<uint32_t>(header_len);
-    buffer.insert(buffer.end(),
-                reinterpret_cast<uint8_t*>(&header_len_le),
-                reinterpret_cast<uint8_t*>(&header_len_le) + 4);
-
-    buffer.insert(buffer.end(), header_buf.begin(), header_buf.end());
-    buffer.insert(buffer.end(), msg.payload.begin(), msg.payload.end());
-
-    uint32_t msg_len = static_cast<uint32_t>(buffer.size() - 4);
-    std::memcpy(buffer.data(), &msg_len, 4);
-
-    spdlog::info("Sending message (EMsg: {}, total size: {})", msg.emsg, buffer.size());
-    connection_->async_send(buffer);
+void Steam::Messaging::CMClient::send_msg_proto(const MsgProto& msg) {
+    
 }*/
 
 template<typename TBody>
-void CMClient::send_msg(const Msg<TBody>& msg)
+void Steam::Messaging::CMClient::send_msg(const Steam::Messaging::ClientMessages::Msg<TBody>& msg)
 {
     auto buffer = msg.Serialize();
 
@@ -134,7 +110,7 @@ void CMClient::send_msg(const Msg<TBody>& msg)
     connection_->async_send(buffer);
 }
 
-void CMClient::shutdown() {
+void Steam::Messaging::CMClient::shutdown() {
     if (connection_ && connection_->is_connected())
         connection_->close_tcp();
     

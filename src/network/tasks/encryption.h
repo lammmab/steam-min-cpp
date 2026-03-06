@@ -103,11 +103,6 @@ inline std::vector<uint8_t> generate_random_bytes(size_t length)
     return buffer;
 }
 
-struct EncryptionResponse {
-    Msg<SteamInternal::Internal::MsgChannelEncryptResponse> msg;
-    std::vector<uint8_t> key;
-};
-
 // 1. Grab the challenge (usually 16 bytes) std::vector<uint8_t>
 // 2. Create an empty MsgChannelEncryptResponse (a legacy, non-protobuf Msg.), with the NORMAL MsgHdr
 // 3. Generate 32 random bytes, this is the AES key
@@ -118,11 +113,11 @@ struct EncryptionResponse {
 // 8. the encrypted vector array, the crc32 hash key, 4 nil bytes of padding
 
 // https://github.com/SteamRE/SteamKit/blob/master/SteamKit2/SteamKit2/Networking/Steam3/EnvelopeEncryptedConnection.cs#L131
-inline Msg<SteamInternal::Internal::MsgChannelEncryptResponse> generate_encryption_response(
-    const PacketMsg& packet,
+inline Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> generate_encryption_response(
+    const Steam::Messaging::Packets::PacketMsg& packet,
     std::vector<uint8_t>& key_store_
 ) {
-    Msg<SteamInternal::Internal::MsgChannelEncryptRequest> request(packet);
+    Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptRequest> request(packet);
     std::vector<uint8_t> payload = request.Payload();
 
     std::vector<uint8_t> challenge(
@@ -133,7 +128,7 @@ inline Msg<SteamInternal::Internal::MsgChannelEncryptResponse> generate_encrypti
     key_store_ = generate_random_bytes(32);
 
     RUNTIME_ASSERT(request.Body.protocolVersion == 1, "Encryption handshake protocol version mismatch!");
-    RUNTIME_ASSERTF(request.Body.universe == SteamInternal::EUniverse::Public, "Expected public universe, but got {}",static_cast<int>(request.Body.universe));
+    RUNTIME_ASSERTF(request.Body.universe == Steam::Internal::Enums::EUniverse::Public, "Expected public universe, but got {}",static_cast<int>(request.Body.universe));
     RUNTIME_ASSERTF(challenge.size() == 16, "Expected 16 byte handshake, but got {} bytes",static_cast<int>(challenge.size()));
 
     std::vector<uint8_t> handshake = key_store_;
@@ -147,7 +142,7 @@ inline Msg<SteamInternal::Internal::MsgChannelEncryptResponse> generate_encrypti
     uint32_t hash_bytes = crc32_hash(encrypted_key_vector);
     spdlog::info("Encrypted ciphertext size: {}",encrypted_key_vector.size());
     
-    Msg<SteamInternal::Internal::MsgChannelEncryptResponse> response;
+    Steam::Messaging::ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> response;
     
     response.WriteBytes(encrypted_key_vector);
     response.WriteBytes(crc_to_vector(hash_bytes));

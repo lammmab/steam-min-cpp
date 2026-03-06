@@ -1,10 +1,10 @@
 #include "auth/auth.h"
 
-void Auth::logout() {
+void Steam::Authentication::Auth::logout() {
     // Stub for now
 }
 
-bool Auth::anonymous_login() {
+bool Steam::Authentication::Auth::anonymous_login() {
     // Also a stub, return false for now
     return false;
 }
