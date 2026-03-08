@@ -14,7 +14,7 @@ Please not that currently only TCP connections are supported.
 ## Requirements
 
 - libcurl
-- protobuf
+- boost
 
 ## Minimal Usage:
 
