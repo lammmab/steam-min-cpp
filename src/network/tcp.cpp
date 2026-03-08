@@ -2,6 +2,7 @@
 #include <spdlog/fmt/bin_to_hex.h>
 
 using namespace Steam::Networking;
+namespace asio = boost::asio;
 
 uint32_t parse_message_length(const std::array<uint8_t, 8>& buffer) {
     if (buffer.size() < 4) {
@@ -18,12 +19,7 @@ uint32_t parse_message_length(const std::array<uint8_t, 8>& buffer) {
 }
 
 bool validate_magic(const std::array<uint8_t, 8>& buffer,const std::array<uint8_t, 4>& MAGIC) {
-    for (size_t i = 0; i < MAGIC.size(); ++i) {
-        if (buffer[4 + i] != MAGIC[i]) {
-            return false;
-        }
-    }
-    return true;
+    return std::equal(MAGIC.begin(), MAGIC.end(), buffer.begin() + 4);
 }
 
 TCPConnection::TCPConnection(asio::io_context& ctx)
@@ -38,7 +34,7 @@ void TCPConnection::network_close()
     if (state_ == ConnectionState::DISCONNECTED)
         return;
 
-    std::error_code ec;
+    boost::system::error_code ec;
     socket_.close(ec);
 
     state_ = ConnectionState::DISCONNECTED;
@@ -49,7 +45,7 @@ void TCPConnection::network_connect()
     if (state_ != ConnectionState::DISCONNECTED)
         return;
 
-    spdlog::info("TCPConnection: starting open_tcp()");
+    spdlog::info("TCPConnection: starting network_connect()");
     state_ = ConnectionState::CONNECTING;
 
     fetcher_.fetch_cm_servers();

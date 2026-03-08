@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cstdint>
+#include <functional>
 
 namespace Steam::Networking {
     enum class ConnectionState {

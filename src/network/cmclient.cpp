@@ -15,7 +15,7 @@ void CMClient::start_session() {
         connection_->network_connect();
         spdlog::info("Connected successfully.");
     } catch (const std::exception& e) {
-        spdlog::error("Could not connect via TCP.");
+        spdlog::error("Could not connect via TCP: {}",e.what());
     }
 }
 

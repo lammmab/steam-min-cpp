@@ -1,10 +1,10 @@
 #include <iostream>
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include "client/client.hpp"
 #include "network/tcp.hpp"
 
 int main() {
-    asio::io_context io_ctx;
+    boost::asio::io_context io_ctx;
     auto connection = std::make_unique<Steam::Networking::TCPConnection>(io_ctx);
 
     Steam::SteamClient client(std::move(connection));

@@ -1,5 +1,5 @@
 #pragma once
-#include <asio.hpp>
+#include <boost/asio.hpp>
 #include <vector>
 #include <queue>
 #include <mutex>
@@ -13,12 +13,12 @@
 #include "web/cmfetcher.hpp"
 #include "network/connection.hpp"
 #include <spdlog/spdlog.h>
-#include <optional>
+#include <boost/system/error_code.hpp>
 
 namespace Steam::Networking {
     class TCPConnection: public IConnection {
     public:
-        TCPConnection(asio::io_context& ctx);
+        TCPConnection(boost::asio::io_context& ctx);
         ~TCPConnection() override;
 
         inline ConnectionState state() const override {
@@ -32,10 +32,7 @@ namespace Steam::Networking {
 
         void set_on_frame(
             std::function<void(std::vector<uint8_t>)> handler
-        ) override
-        {
-            on_frame_ = std::move(handler);
-        }
+        ) override { on_frame_ = std::move(handler); }
 
     private:
         void start_read_header();
@@ -55,8 +52,8 @@ namespace Steam::Networking {
         
         const std::array<uint8_t, 4> MAGIC = {'V','T','0','1'};
             
-        asio::io_context& ctx;
-        asio::ip::tcp::socket socket_;
+        boost::asio::io_context& ctx;
+        boost::asio::ip::tcp::socket socket_;
         std::function<void(const std::vector<uint8_t>&)> wait_for_callback;
         std::function<void(std::vector<uint8_t>)> on_frame_;
         

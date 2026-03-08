@@ -2,19 +2,37 @@
 
 ## About
 
-Minimal Steam connections written in C++.This includes logic for:
+Minimal Steam connections written in C++.
+This includes logic for:
 - Connecting to a Steam CM server
 - Logging in as an anonymous user
 - Getting product details given a product ID
 
 It is built to support future contributions extending the client to support other Steam server features.
+Please not that currently only TCP connections are supported.
 
 ## Requirements
 
 - libcurl
 - protobuf
 
-## Building
+## Minimal Usage:
+
+```cpp
+boost::asio::io_context io_ctx; // Create the Asio context for low-level TCP work
+auto connection = std::make_unique<Steam::Networking::TCPConnection>(io_ctx); // Make a unique connection to the TCPConnection
+
+Steam::SteamClient client(std::move(connection)); // Pass ownership of the connection and create a SteamClient
+
+client.connect(); // Connect to the TCP server / kick off the encryption phase
+std::thread io_thread([&io_ctx]() {
+    io_ctx.run(); // Run the io thread
+});
+client.disconnect() // Close the connection.
+```
+
+## Building
+
 
 1. Clone the repo
 ```bash

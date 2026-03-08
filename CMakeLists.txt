@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.0...3.5)
 project(SteamClient LANGUAGES CXX)
 
+find_package(Boost REQUIRED COMPONENTS system)
 find_package(CURL REQUIRED)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -10,13 +11,8 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.1)
 
 include(FetchContent)
 include(cmake/get_cpm.cmake)
-FetchContent_Declare(
-    asio
-    GIT_REPOSITORY https://github.com/chriskohlhoff/asio.git
-    GIT_TAG asio-1-27-0
-)
-FetchContent_MakeAvailable(asio)
 
+# LOGGING
 FetchContent_Declare(
     spdlog
     GIT_REPOSITORY https://github.com/gabime/spdlog.git
@@ -33,7 +29,6 @@ add_executable(SteamClient ${SOURCES})
 
 target_include_directories(SteamClient PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${asio_SOURCE_DIR}/asio/include
 )
 
 set(protobuf_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
@@ -53,16 +48,18 @@ CPMAddPackage(
 	OPTIONS       	"CRYPTOPP_BUILD_TESTING OFF" "CRYPTOPP_INSTALL OFF"
 )
 
-target_link_libraries(SteamClient PRIVATE protobuf::libprotobuf)
-target_include_directories(SteamClient PRIVATE ${protobuf_SOURCE_DIR}/src)
 
 target_link_libraries(SteamClient PRIVATE 
+    protobuf::libprotobuf
     spdlog::spdlog_header_only
     CURL::libcurl
     cryptopp::cryptopp
+    Boost::system
     #OpenSSL::SSL
     #OpenSSL::Crypto
 )
+
+target_include_directories(SteamClient PRIVATE ${protobuf_SOURCE_DIR}/src)
 
 if(WIN32)
     target_link_libraries(SteamClient PRIVATE ws2_32)
