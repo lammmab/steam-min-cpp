@@ -41,16 +41,12 @@ namespace Steam::Messaging {
     private:
 
         void consume_frame(const std::vector<uint8_t>& frame);
-        inline bool is_encryption_msg(uint32_t emsg_code) {
-            if (
+        inline const bool is_encryption_msg(uint32_t emsg_code) {
+            return (
                 emsg_code == (uint32_t)Steam::Internal::Enums::EMsg::ChannelEncryptRequest ||
                 emsg_code == (uint32_t)Steam::Internal::Enums::EMsg::ChannelEncryptResponse ||
                 emsg_code == (uint32_t)Steam::Internal::Enums::EMsg::ChannelEncryptResult
-            ) {
-                return false;
-            }
-
-            return true;
+            );
         }
 
         

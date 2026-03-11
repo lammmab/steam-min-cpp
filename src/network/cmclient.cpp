@@ -27,15 +27,23 @@ void CMClient::consume_frame(const std::vector<uint8_t>& frame) {
 
     try {
         if (is_encryption_msg(emsg)) {
+            // We're a raw Msg
+            auto raw = std::make_unique<Packets::PacketMsg>(
+                static_cast<Steam::Internal::Enums::EMsg>(emsg), frame
+            );
+            emit(*raw);
+        } else if (MsgUtil::is_protobuf_msg(emsg)) {
+            // We're a protobuf Msg
             auto proto = std::make_unique<Packets::PacketClientMsgProtobuf>(
                 static_cast<Steam::Internal::Enums::EMsg>(emsg), frame
             );
             emit(*proto);
         } else {
-            auto raw   = std::make_unique<Packets::PacketMsg>(
+            // We're a struct msg
+            auto str   = std::make_unique<Packets::PacketClientMsg>(
                 static_cast<Steam::Internal::Enums::EMsg>(emsg), frame
             );
-            emit(*raw);
+            emit(*str);
         }
 
     } catch (const std::exception& e) {
