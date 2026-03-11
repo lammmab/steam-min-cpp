@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cstdint>
+#include <stdexcept>
 
 #include <cryptopp/rsa.h>
 #include <cryptopp/osrng.h>
@@ -8,12 +9,14 @@
 #include <cryptopp/filters.h>
 #include <cryptopp/files.h>
 #include <cryptopp/crc.h>
+#include <cryptopp/aes.h>
+#include <cryptopp/modes.h>
 
 namespace Steam::Crypto::Helpers {
-    inline constexpr static size_t INITIALIZATION_VECTOR_LENGTH = 16;
-    inline constexpr static size_t INITIALIZATION_VECTOR_RAND_LENGTH = 3;
+    inline constexpr static size_t IV_LENGTH = 16;
+    inline constexpr static size_t IV_RAND_LENGTH = 3;
     inline constexpr static size_t BLOCK_SIZE = 16;
-    inline constexpr static size_t HASH_LENGTH = INITIALIZATION_VECTOR_LENGTH - INITIALIZATION_VECTOR_RAND_LENGTH;
+    inline constexpr static size_t HASH_LENGTH = IV_LENGTH - IV_RAND_LENGTH;
 
     inline static std::vector<uint8_t> crc_to_vector(uint32_t crc)
     {
@@ -42,9 +45,8 @@ namespace Steam::Crypto::Helpers {
     );
     uint32_t crc32_hash(const std::vector<uint8_t>& data);
     
-    int symmetric_encrypt_hmac_iv(
+    std::vector<uint8_t> symmetric_encrypt_hmac_iv(
         const std::vector<uint8_t>& plaintext,
-        std::vector<uint8_t>& output,
         const std::vector<uint8_t>& session_key,
         const std::vector<uint8_t>& hmac_secret,
         CryptoPP::RandomNumberGenerator& rng
@@ -56,21 +58,21 @@ namespace Steam::Crypto::Helpers {
         const std::vector<uint8_t>& hmac_secret
     );
 
-    void generate_initialization_vector(
+    void generate_iv(
         const std::vector<uint8_t>& plaintext,
         std::vector<uint8_t>& iv,
         const std::vector<uint8_t>& hmac_secret,
         CryptoPP::RandomNumberGenerator& rng
     );
 
-    bool validate_initialization_vector(
+    bool validate_iv(
         const std::vector<uint8_t>& plaintext,
         const std::vector<uint8_t>& iv,
         const std::vector<uint8_t>& hmac_secret
     );
 
     inline size_t const calculate_max_encrypted_length(size_t plaintext_len) {
-        return INITIALIZATION_VECTOR_LENGTH + (((plaintext_len + BLOCK_SIZE) / BLOCK_SIZE) * BLOCK_SIZE);
+        return IV_LENGTH + (((plaintext_len + BLOCK_SIZE) / BLOCK_SIZE) * BLOCK_SIZE);
     }
 
 }

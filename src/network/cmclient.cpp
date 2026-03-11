@@ -22,26 +22,31 @@ void CMClient::start_session() {
 // Start consuming TCP messages
 void CMClient::consume_frame(const std::vector<uint8_t>& frame) {
     if (frame.size() < 4) return;
+    std::vector<uint8_t> data = frame;
 
-    uint32_t emsg = frame[0] | (frame[1] << 8) | (frame[2] << 16) | (frame[3] << 24);
+    if (channel_secured_) {
+        data = crypto_.process_incoming_encrypted_message(frame);
+    }
+
+    uint32_t emsg = data[0] | (data[1] << 8) | (data[2] << 16) | (data[3] << 24);
 
     try {
         if (is_encryption_msg(emsg)) {
             // We're a raw Msg
             auto raw = std::make_unique<Packets::PacketMsg>(
-                static_cast<Steam::Internal::Enums::EMsg>(emsg), frame
+                static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
             emit(*raw);
         } else if (MsgUtil::is_protobuf_msg(emsg)) {
             // We're a protobuf Msg
             auto proto = std::make_unique<Packets::PacketClientMsgProtobuf>(
-                static_cast<Steam::Internal::Enums::EMsg>(emsg), frame
+                static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
             emit(*proto);
         } else {
             // We're a struct msg
             auto str   = std::make_unique<Packets::PacketClientMsg>(
-                static_cast<Steam::Internal::Enums::EMsg>(emsg), frame
+                static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
             emit(*str);
         }
@@ -78,6 +83,7 @@ void CMClient::rcv_msg(const Packets::PacketMsg& msg) {
     spdlog::info("Payload size: {}", msg.payload.size());
     spdlog::info("Body starts at offset: {}", msg.bodyOffset);
 
+
     try {
         switch(msg.MsgType()) {
             case Steam::Internal::Enums::EMsg::ChannelEncryptRequest: {
@@ -108,21 +114,21 @@ void CMClient::rcv_msg(const Packets::PacketMsg& msg) {
     }
 }
 
-/*
-void CMClient::send_msg_proto(const MsgProto& msg) {
-    
-}*/
-
 template<typename TBody>
 void CMClient::send_msg(const ClientMessages::Msg<TBody>& msg)
 {
     auto buffer = msg.Serialize();
-
+    
     spdlog::info(
         "Sending RAW message (size: {}), (EMsg: {})", 
         buffer.size(), 
         static_cast<uint32_t>(msg.Body.GetEMsg())
     );
+
+    if (channel_secured_) {
+        buffer = crypto_.process_outgoing_encrypted_message(buffer);
+    }
+
     connection_->async_send(buffer);
 }
 

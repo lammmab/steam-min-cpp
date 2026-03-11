@@ -50,14 +50,13 @@ namespace Steam::Messaging {
         }
 
         
-        //void send_msg_proto(const MsgProto& msg);
         template<typename TBody>
         void send_msg(const Steam::Messaging::ClientMessages::Msg<TBody>& msg);
         
 
         void rcv_msg_proto(const Steam::Messaging::Packets::PacketClientMsgProtobuf& msg);
         void rcv_msg(const Steam::Messaging::Packets::PacketMsg& msg);
-
+        // Add handling for struct messages
 
         void setup_handlers();
 

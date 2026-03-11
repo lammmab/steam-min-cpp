@@ -44,7 +44,11 @@ namespace Steam::Crypto {
                 const Steam::Messaging::Packets::PacketMsg& packet
             );
 
-            Steam::Messaging::Packets::IPacketMsg process_incoming_encrypted_message(
+            std::vector<uint8_t> process_incoming_encrypted_message(
+                const std::vector<uint8_t>& frame
+            );
+
+            std::vector<uint8_t> process_outgoing_encrypted_message(
                 const std::vector<uint8_t>& frame
             );
 

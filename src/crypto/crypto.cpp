@@ -1,10 +1,23 @@
 #include "crypto/crypto.hpp"
 
 using namespace Steam::Messaging;
+using EncryptionManager = Steam::Crypto::EncryptionManager;
+
+std::vector<uint8_t> EncryptionManager::process_incoming_encrypted_message(
+    const std::vector<uint8_t>& frame
+) {
+    return Steam::Crypto::Helpers::symmetric_decrypt_hmac_iv(frame,session_key_,hmac_secret_);
+}
+
+std::vector<uint8_t> EncryptionManager::process_outgoing_encrypted_message(
+    const std::vector<uint8_t>& frame
+) {
+    return Steam::Crypto::Helpers::symmetric_encrypt_hmac_iv(frame,session_key_,hmac_secret_,rng_);
+}
 
 // Generates the proper MsgChannelEncryptResponse with RSA OAEP SHA1 and CRC32
 ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> 
-    Steam::Crypto::EncryptionManager::generate_encryption_response(
+    EncryptionManager::generate_encryption_response(
         const Packets::PacketMsg& packet
 ) {
     ClientMessages::Msg<Steam::Internal::MsgChannelEncryptRequest> request(packet);
