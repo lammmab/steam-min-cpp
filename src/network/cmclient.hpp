@@ -1,11 +1,9 @@
 #pragma once
 #include "utils/event_emitter.h"
-#include "network/connection.hpp"
+#include "network/connection/connection.hpp"
 #include <string>
 #include <memory>
 #include <exception>
-
-#include <spdlog/spdlog.h>
 
 #include <cstdint>
 #include <vector>
@@ -23,9 +21,7 @@ namespace Steam::Messaging {
     public:
         CMClient(std::unique_ptr<Steam::Networking::IConnection> connection)
             : connection_(std::move(connection))
-        {
-            spdlog::info("Setup CMClient");
-        }
+        {}
 
         ~CMClient() 
         {

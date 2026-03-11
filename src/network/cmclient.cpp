@@ -1,5 +1,8 @@
 #include "network/cmclient.hpp"
 #include <iostream>
+#include "utils/macros.h"
+
+FILE_LOGGER();
 
 using namespace Steam::Messaging;
 
@@ -13,9 +16,9 @@ void CMClient::start_session() {
         setup_handlers();
 
         connection_->network_connect();
-        spdlog::info("Connected successfully.");
+        logger->info("Connected successfully.");
     } catch (const std::exception& e) {
-        spdlog::error("Could not connect via TCP: {}",e.what());
+        logger->error("Could not connect via TCP: {}",e.what());
     }
 }
 
@@ -52,7 +55,7 @@ void CMClient::consume_frame(const std::vector<uint8_t>& frame) {
         }
 
     } catch (const std::exception& e) {
-        spdlog::error("Failed to parse frame (EMsg: {}): {}", emsg, e.what());
+        logger->error("Failed to parse frame (EMsg: {}): {}", emsg, e.what());
     }
 }
 
@@ -67,9 +70,7 @@ void CMClient::setup_handlers() {
 }
 
 void CMClient::rcv_msg_proto(const Packets::PacketClientMsgProtobuf& msg) {
-    spdlog::info("Received protobuf Msg (EMsg: {})", static_cast<uint32_t>(msg.MsgType()));
-    spdlog::info("Payload size: {}", msg.payload.size());
-    spdlog::info("Payload preview: {:02X} {:02X} {:02X} {:02X}", 
+    logger->info("Payload preview: {:02X} {:02X} {:02X} {:02X}", 
                  msg.payload.size() > 0 ? msg.payload[0] : 0,
                  msg.payload.size() > 1 ? msg.payload[1] : 0,
                  msg.payload.size() > 2 ? msg.payload[2] : 0,
@@ -79,38 +80,32 @@ void CMClient::rcv_msg_proto(const Packets::PacketClientMsgProtobuf& msg) {
 // Receives a PacketMsg with the normal MsgHdr
 void CMClient::rcv_msg(const Packets::PacketMsg& msg) {
     uint32_t emsg = static_cast<uint32_t>(msg.MsgType());
-    spdlog::info("Received raw Msg (EMsg: {})", emsg);
-    spdlog::info("Payload size: {}", msg.payload.size());
-    spdlog::info("Body starts at offset: {}", msg.bodyOffset);
-
 
     try {
         switch(msg.MsgType()) {
             case Steam::Internal::Enums::EMsg::ChannelEncryptRequest: {
                 ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> response = 
                     crypto_.generate_encryption_response(msg);
-                spdlog::info("Sending encryption response");
-                spdlog::info("Response size (CMCLIENT): {}", response.Payload().size());
                 send_msg(response);
                 break;
             }
             case Steam::Internal::Enums::EMsg::ChannelEncryptResult: {
                 ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResult> res(msg);
                 if (res.Body.result == Steam::Internal::Enums::EResult::OK) {
-                    spdlog::info("Channel secured");
+                    logger->info("CM channel secured");
                     channel_secured_ = true;
                 } else {
-                    spdlog::info("Encryption handshake failed");
+                    logger->info("Encryption handshake failed");
                 }
                 break;
             } 
             default: {
-                spdlog::info("No handling for msg (EMsg {}) implemented.", emsg);
+                logger->info("No handling for msg (EMsg {}) implemented.", emsg);
                 break;
             }
         }
     } catch (const std::exception& e) {
-        spdlog::error("Failed to handle packet (EMsg {}): {}", emsg,e.what());
+        logger->error("Failed to handle packet (EMsg {}): {}", emsg,e.what());
     }
 }
 
@@ -118,12 +113,6 @@ template<typename TBody>
 void CMClient::send_msg(const ClientMessages::Msg<TBody>& msg)
 {
     auto buffer = msg.Serialize();
-    
-    spdlog::info(
-        "Sending RAW message (size: {}), (EMsg: {})", 
-        buffer.size(), 
-        static_cast<uint32_t>(msg.Body.GetEMsg())
-    );
 
     if (channel_secured_) {
         buffer = crypto_.process_outgoing_encrypted_message(buffer);
@@ -136,5 +125,5 @@ void CMClient::shutdown() {
     if (connection_ && connection_->is_connected())
         connection_->network_close();
     
-    spdlog::info("Closed connection and CMClient successfully");
+    logger->info("Closed connection and CMClient successfully");
 }

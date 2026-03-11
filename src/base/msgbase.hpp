@@ -76,7 +76,6 @@ namespace Steam::Messaging::Messages {
     public:
         THeader Header;
 
-        // These would be implemented per-message
         virtual bool IsProto() const = 0;
         virtual Steam::Internal::Enums::EMsg MsgType() const = 0;
 
@@ -87,7 +86,6 @@ namespace Steam::Messaging::Messages {
 
         MsgBaseHdr(size_t reserve = 0) : MsgBase(reserve), Header() {}
 
-        // Serialize header + payload
         virtual std::vector<uint8_t> Serialize() const {
             Stream stream(StreamingMode::Write);
             Header.Serialize(stream);

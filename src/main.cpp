@@ -1,7 +1,7 @@
 #include <iostream>
 #include <boost/asio.hpp>
 #include "client/client.hpp"
-#include "network/tcp.hpp"
+#include "network/connection/tcp.hpp"
 
 int main() {
     boost::asio::io_context io_ctx;

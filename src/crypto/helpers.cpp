@@ -139,6 +139,35 @@ std::vector<uint8_t> Helpers::symmetric_decrypt_hmac_iv(
     return plaintext;
 }
 
+void Helpers::generate_iv(
+    const std::vector<uint8_t>& plaintext,
+    std::vector<uint8_t>& iv,
+    const std::vector<uint8_t>& hmac_secret,
+    CryptoPP::RandomNumberGenerator& rng
+)
+{
+    const size_t hash_len = HASH_LENGTH;
+
+    rng.GenerateBlock(iv.data() + hash_len, IV_RAND_LENGTH);
+
+    std::vector<uint8_t> hmac_buffer(plaintext.size() + IV_RAND_LENGTH);
+
+    std::memcpy(hmac_buffer.data(),
+                iv.data() + hash_len,
+                IV_RAND_LENGTH);
+
+    std::memcpy(hmac_buffer.data() + IV_RAND_LENGTH,
+                plaintext.data(),
+                plaintext.size());
+
+    HMAC<SHA1> hmac(hmac_secret.data(), hmac_secret.size());
+
+    byte digest[SHA1::DIGESTSIZE];
+    hmac.CalculateDigest(digest, hmac_buffer.data(), hmac_buffer.size());
+
+    std::memcpy(iv.data(), digest, hash_len);
+}
+
 bool Helpers::validate_iv(
     const std::vector<uint8_t>& plaintext,
     const std::vector<uint8_t>& iv,

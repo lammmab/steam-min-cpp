@@ -1,4 +1,7 @@
-#include "network/websockets.hpp"
+#include "network/connection/websockets.hpp"
+#include "utils/macros.h"
+
+FILE_LOGGER();
 
 using namespace Steam::Networking;
 namespace asio = boost::asio;
@@ -18,19 +21,19 @@ void WebsocketConnection::reader_loop() {
         buffer, 
         [this](boost::system::error_code ec, std::size_t bytes_transferred){
             if (ec) {
-                spdlog::error("WebsocketConnection: read failed: {}", ec.message());
+                logger->error("WebsocketConnection: read failed: {}", ec.message());
                 return handle_disconnect(ec);
             }
             
-            spdlog::info("WebsocketConnection: read {} bytes", bytes_transferred);
+            logger->info("WebsocketConnection: read {} bytes", bytes_transferred);
             if (on_frame_) {
-                spdlog::info("WebsocketConnection: emitting on_frame callback");
+                logger->info("WebsocketConnection: emitting on_frame callback");
                 on_frame_(buffer_);
             } else {
-                spdlog::warn("WebsocketConnection: on_frame callback is null");
+                logger->warn("WebsocketConnection: on_frame callback is null");
             }
 
-            spdlog::info("WebsocketConnection: looping to next read");
+            logger->info("WebsocketConnection: looping to next read");
             reader_loop();
     });
 }
@@ -39,17 +42,17 @@ void WebsocketConnection::network_connect() {
     if (state_ != ConnectionState::DISCONNECTED)
         return;
 
-    spdlog::info("WebsocketConnection: starting network_connect()");
+    logger->info("WebsocketConnection: starting network_connect()");
     state_ = ConnectionState::CONNECTING;
 
     fetcher_.fetch_cm_servers();
     auto servers = fetcher_.get_servers();
     if (servers.empty()) {
-        spdlog::error("WebsocketConnection: no CM servers found");
+        logger->error("WebsocketConnection: no CM servers found");
         throw std::runtime_error("No CM servers");
     }
 
-    spdlog::info("WebsocketConnection: resolving server {}:{}", servers[0].first, servers[0].second);
+    logger->info("WebsocketConnection: resolving server {}:{}", servers[0].first, servers[0].second);
     asio::ip::tcp::resolver resolver(ctx_);
 
     auto const endpoints = resolver.resolve(servers[0].first,
@@ -65,7 +68,7 @@ void WebsocketConnection::network_connect() {
             });
         } else {
             state_ = ConnectionState::DISCONNECTED;
-            spdlog::error("WebsocketConnection: failed to connect: {}", ec.message());
+            logger->error("WebsocketConnection: failed to connect: {}", ec.message());
 
         }
     });
@@ -80,7 +83,7 @@ void WebsocketConnection::network_close() {
 }
 
 void WebsocketConnection::async_send(const std::vector<uint8_t>& data) {
-    spdlog::info("WebsocketConnection: Async_send Unimplemented");
+    spdlog::info("WebsocketConnection: async_send Unimplemented");
 }
 
 void WebsocketConnection::handle_disconnect(const std::string& reason) {

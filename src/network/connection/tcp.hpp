@@ -1,5 +1,4 @@
 #pragma once
-#include <boost/asio.hpp>
 #include <vector>
 #include <queue>
 #include <mutex>
@@ -11,8 +10,9 @@
 #include <cstring>
 #include <stdexcept>
 #include "web/cmfetcher.hpp"
-#include "network/connection.hpp"
-#include <spdlog/spdlog.h>
+#include "network/connection/connection.hpp"
+
+#include <boost/asio.hpp>
 #include <boost/system/error_code.hpp>
 
 namespace Steam::Networking {

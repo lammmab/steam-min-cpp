@@ -12,6 +12,8 @@
 #include <cryptopp/aes.h>
 #include <cryptopp/modes.h>
 
+#include <boost/endian/conversion.hpp>
+
 namespace Steam::Crypto::Helpers {
     inline constexpr static size_t IV_LENGTH = 16;
     inline constexpr static size_t IV_RAND_LENGTH = 3;
@@ -20,12 +22,10 @@ namespace Steam::Crypto::Helpers {
 
     inline static std::vector<uint8_t> crc_to_vector(uint32_t crc)
     {
-        return std::vector<uint8_t>{
-            static_cast<uint8_t>(crc & 0xFF),
-            static_cast<uint8_t>((crc >> 8) & 0xFF),
-            static_cast<uint8_t>((crc >> 16) & 0xFF),
-            static_cast<uint8_t>((crc >> 24) & 0xFF)
-        };
+        uint32_t le_crc = boost::endian::native_to_little(crc);
+        const uint8_t* bytes = reinterpret_cast<const uint8_t*>(&le_crc);
+
+        return std::vector<uint8_t>(bytes, bytes + sizeof(uint32_t));
     }
 
     inline std::vector<uint8_t> generate_random_bytes(

@@ -1,5 +1,9 @@
-#include "network/tcp.hpp"
-#include <spdlog/fmt/bin_to_hex.h>
+#include "network/connection/tcp.hpp"
+#include <boost/endian/conversion.hpp>
+#include "utils/macros.h"
+
+FILE_LOGGER();
+
 
 using namespace Steam::Networking;
 namespace asio = boost::asio;
@@ -9,13 +13,10 @@ uint32_t parse_message_length(const std::array<uint8_t, 8>& buffer) {
         throw std::runtime_error("Buffer too small to parse length");
     }
 
-    uint32_t len = 0;
-    len |= static_cast<uint32_t>(buffer[0]);
-    len |= static_cast<uint32_t>(buffer[1]) << 8;
-    len |= static_cast<uint32_t>(buffer[2]) << 16;
-    len |= static_cast<uint32_t>(buffer[3]) << 24;
+    uint32_t len;
+    std::memcpy(&len, buffer.data(), sizeof(uint32_t));
 
-    return len;
+    return boost::endian::native_to_little(len);
 }
 
 bool validate_magic(const std::array<uint8_t, 8>& buffer,const std::array<uint8_t, 4>& MAGIC) {
@@ -45,17 +46,15 @@ void TCPConnection::network_connect()
     if (state_ != ConnectionState::DISCONNECTED)
         return;
 
-    spdlog::info("TCPConnection: starting network_connect()");
     state_ = ConnectionState::CONNECTING;
 
     fetcher_.fetch_cm_servers();
     auto servers = fetcher_.get_servers();
     if (servers.empty()) {
-        spdlog::error("TCPConnection: no CM servers found");
         throw std::runtime_error("No CM servers");
     }
 
-    spdlog::info("TCPConnection: resolving server {}:{}", servers[0].first, servers[0].second);
+    logger->info("resolving server {}:{}", servers[0].first, servers[0].second);
     asio::ip::tcp::resolver resolver(ctx);
     auto endpoints = resolver.resolve(servers[0].first,
                                       std::to_string(servers[0].second));
@@ -64,64 +63,48 @@ void TCPConnection::network_connect()
         [this](std::error_code ec, auto) {
             if (!ec) {
                 state_ = ConnectionState::CONNECTED;
-                spdlog::info("TCPConnection: connected, starting async read header");
                 start_read_header();
             } else {
                 state_ = ConnectionState::DISCONNECTED;
-                spdlog::error("TCPConnection: failed to connect: {}", ec.message());
+                logger->error("failed to connect: {}", ec.message());
             }
         });
 }
 
 void TCPConnection::start_read_header()
 {
-    spdlog::info("TCPConnection: start_read_header() called");
-    auto self = this;
-
     asio::async_read(socket_,
         asio::buffer(header_buffer_, 8),
-        [this, self](std::error_code ec, std::size_t bytes_transferred) {
+        [this](std::error_code ec, std::size_t bytes_transferred) {
             if (ec) {
-                spdlog::error("TCPConnection: header read failed: {}", ec.message());
                 return handle_disconnect(ec);
             }
 
-            spdlog::info("TCPConnection: header read {} bytes", bytes_transferred);
             uint32_t len = parse_message_length(header_buffer_);
-            spdlog::info("TCPConnection: parsed frame length {}", len);
 
             if (!validate_magic(header_buffer_, MAGIC)) {
-                spdlog::error("TCPConnection: magic validation failed");
                 return handle_disconnect("Magic could not be verified");
             }
 
-            spdlog::info("TCPConnection: magic validated, reading body of length {}", len);
             start_read_body(len);
         });
 }
 
 void TCPConnection::start_read_body(uint32_t len)
 {
-    spdlog::info("TCPConnection: start_read_body() called with len {}", len);
     body_buffer_.resize(len);
 
     asio::async_read(socket_,
         asio::buffer(body_buffer_),
         [this](std::error_code ec, std::size_t bytes_transferred) {
             if (ec) {
-                spdlog::error("TCPConnection: body read failed: {}", ec.message());
                 return handle_disconnect(ec);
             }
 
-            spdlog::info("TCPConnection: body read {} bytes", bytes_transferred);
             if (on_frame_) {
-                spdlog::info("TCPConnection: emitting on_frame callback");
                 on_frame_(body_buffer_);
-            } else {
-                spdlog::warn("TCPConnection: on_frame callback is null");
             }
 
-            spdlog::info("TCPConnection: looping to next header read");
             start_read_header();
         });
 }
@@ -134,7 +117,7 @@ void TCPConnection::async_send(const std::vector<uint8_t>& data)
     buffer.reserve(sizeof(uint32_t) + MAGIC.size() + data.size());
 
     // https://github.com/SteamRE/SteamKit/blob/master/SteamKit2/SteamKit2/Networking/Steam3/TcpConnection.cs#L327
-    // 1. Append the data len
+    // 1. Append the data length
     buffer.insert(buffer.end(),
                   reinterpret_cast<uint8_t*>(&data_len),
                   reinterpret_cast<uint8_t*>(&data_len) + sizeof(uint32_t));
@@ -145,7 +128,6 @@ void TCPConnection::async_send(const std::vector<uint8_t>& data)
     // 3. Append the data
     buffer.insert(buffer.end(), data.begin(), data.end());
 
-    spdlog::info("Sending this ENTIRE Buffer hex ({} bytes): {:spn}", buffer.size(), spdlog::to_hex(buffer));
     bool write_in_progress = !write_queue_.empty();
     write_queue_.push_back(std::move(buffer));
     
@@ -153,6 +135,7 @@ void TCPConnection::async_send(const std::vector<uint8_t>& data)
     if (!write_in_progress)
         do_write();
 }
+
 void TCPConnection::do_write()
 {
     asio::async_write(socket_,
@@ -167,7 +150,7 @@ void TCPConnection::do_write()
 }
 
 void TCPConnection::handle_disconnect(const std::string& reason) {
-    spdlog::error("TCP disconnected: {}", reason);
+    logger->info("Disconnected: {}", reason);
     network_close();
 }
 

@@ -1,4 +1,4 @@
-#include "network/connection.hpp"
+#include "network/connection/connection.hpp"
 #include "web/cmfetcher.hpp"
 #include <boost/beast.hpp>
 #include <cstring>
@@ -6,8 +6,6 @@
 #include <cstdint>
 #include <stdexcept>
 #include <boost/system/error_code.hpp>
-
-#include <spdlog/spdlog.h>
 
 namespace Steam::Networking {
     class WebsocketConnection : public IConnection {
