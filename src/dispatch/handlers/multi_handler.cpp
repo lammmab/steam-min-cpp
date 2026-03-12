@@ -10,6 +10,10 @@
 #include "utils/gzip/gzip_helpers.hpp"
 #include <boost/endian/conversion.hpp>
 
+#include "utils/macros.h"
+
+FILE_LOGGER();
+
 using namespace Steam;
 using namespace Steam::Messaging;
 

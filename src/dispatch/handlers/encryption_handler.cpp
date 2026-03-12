@@ -3,6 +3,8 @@
 
 using namespace Steam;
 using namespace Steam::Messaging;
+namespace Events = Steam::Events;
+namespace Enums = Steam::Internal::Enums;
 
 static void handle_encrypt_request(
     CMClient& client,
@@ -13,33 +15,34 @@ static void handle_encrypt_request(
             client.crypto().generate_encryption_response(packet);
         client.send_msg(response);
     } catch (const std::exception& e) {
-        client.emit(Steam::Events::ChannelSecuredEvent{
-            Steam::Events::EventResult{
-                success: false,
-                what: e.what()
-            }
+        client.emit(Events::ChannelSecuredEvent{
+            Events::EventResult::fail(e.what())
         });
     }
 }
 
-static void handle_encrypt_response(
+static void handle_encrypt_result(
     CMClient& client,
     const Packets::PacketMsg& packet)
 {
     ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResult> res(packet);
-    client.emit(Steam::Events::ChannelSecuredEvent{
-        Steam::Events::EventResult {
-            success: res.Body.result == Steam::Internal::Enums::EResult::OK
-        }
+
+    bool success = res.Body.result == Enums::EResult::OK;
+    client.set_channel_secured(success);
+
+    client.emit(Events::ChannelSecuredEvent{
+        success
+            ? Events::EventResult::ok()
+            : Events::EventResult::fail("Failed to encrypt channel; bad server?")
     });
 }
 
 static Steam::Dispatch::MsgRegister<
-    Steam::Internal::Enums::EMsg::ChannelEncryptRequest,
+    Enums::EMsg::ChannelEncryptRequest,
     handle_encrypt_request
 > reg_encrypt;
 
 static Steam::Dispatch::MsgRegister<
-    Steam::Internal::Enums::EMsg::ChannelEncryptResult,
-    handle_encrypt_response
-> reg_response;
+    Enums::EMsg::ChannelEncryptResult,
+    handle_encrypt_result
+> reg_result;

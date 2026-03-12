@@ -8,15 +8,22 @@
 using namespace Steam::Messaging;
 using namespace Steam::Commands;
 namespace Enums = Steam::Internal::Enums;
+namespace Events = Steam::Events;
 
 static void exec_anon_logon(CMClient& client, const AnonymousLogin& req) {
+    if (!client.is_channel_secured()) {
+        client.emit(Events::ClientLogonEvent{
+            Events::EventResult::fail("Channel not secured")
+        });
+    } 
+
     ClientMessages::MsgProto<CMsgClientLogon> msg(Enums::EMsg::ClientLogon);
 
     SteamID steamID(
         0,
         0,
-        Steam::Internal::Enums::EUniverse::Public,
-        Steam::Internal::Enums::EAccountType::AnonUser
+        Enums::EUniverse::Public,
+        Enums::EAccountType::AnonUser
     );
 
     msg.Header.proto.set_steamid(steamID.ConvertToUInt64());

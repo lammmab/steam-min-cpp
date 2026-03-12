@@ -18,14 +18,16 @@ static void handle_logon_response(
     auto result =
         static_cast<Internal::Enums::EResult>(msg.Body.eresult());
     
+    bool success = result == Internal::Enums::EResult::OK;
+
     client.emit(Steam::Events::ClientLogonEvent{
-        result: Steam::Events::EventResult{
-            success: result == Internal::Enums::EResult::OK
-        }
+        success
+            ? Steam::Events::EventResult::ok()
+            : Steam::Events::EventResult::fail("Client login failed; incorrect information?")
     });
 }
 
 static Steam::Dispatch::ProtoRegister<
-    Steam::Internal::Enums::EMsg::ClientLogOnResponse,
+    Internal::Enums::EMsg::ClientLogOnResponse,
     handle_logon_response
 > reg_logon;

@@ -18,38 +18,25 @@ int main() {
 
     Steam::SteamClient client(std::move(connection));
 
-    client.client_on<Events::ClientLogonEvent>([](const Events::ClientLogonEvent& e) {
-        if (e.result.success == true) {
+    client.client_on<Events::ClientLogonEvent>([](const Events::ClientLogonEvent& res) {
+        if (res.ok()) {
             logger->info("Successfully logged on");
         } else {
-            logger->info("Login failed");
+            logger->info(res.what());
         }
     });
 
-    client.client_on<Events::ChannelSecuredEvent>([&client](const Events::ChannelSecuredEvent& e) {
-        if (e.result.success == true) {
+    client.client_on<Events::ChannelSecuredEvent>([&client](const Events::ChannelSecuredEvent& res) {
+        if (res.ok()) {
             logger->info("Sucessfully secured channel");
             client.execute(Commands::AnonymousLogin{});
         }
-        /*
-        logger->info("Sending anonymous login");
-        if (client.anonymous_login()) {
-            ;
-        } else {
-            logger->info("Login failed");
-        }*/
     });
     
     client.connect();
     std::thread io_thread([&io_ctx]() {
         io_ctx.run();
     });
-
-    
-    /*
-    client.client_on<Events::ClientLogonEvent>([](const Events::ClientLogonEvent&) {
-        logger->info("Login successful!");
-    });*/
 
     std::cin.get();
 

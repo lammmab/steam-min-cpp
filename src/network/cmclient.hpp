@@ -43,6 +43,10 @@ namespace Steam::Messaging {
         inline bool is_channel_secured() const {
             return channel_secured_;
         }
+
+        inline void set_channel_secured(bool val) {
+            channel_secured_ = val;
+        }
         
         inline Steam::Crypto::EncryptionManager& crypto() {
             return crypto_;
@@ -69,7 +73,6 @@ namespace Steam::Messaging {
         void consume_frame(const std::vector<uint8_t>& frame, bool encrypt = true);
         
         private:
-        void parse_multi(const Packets::PacketClientMsgProtobuf& msg);
         void send_msg_impl(std::vector<byte> buffer);
         
         inline const bool is_encryption_msg(uint32_t emsg_code) {
@@ -80,11 +83,6 @@ namespace Steam::Messaging {
             );
         }
         
-        void rcv_msg_proto(const Steam::Messaging::Packets::PacketClientMsgProtobuf& msg);
-        // Add handling for struct messages
-
-        void setup_handlers();
-
         bool channel_secured_ = false;
         std::unique_ptr<Steam::Networking::IConnection> connection_;  
         Steam::Crypto::EncryptionManager crypto_;
