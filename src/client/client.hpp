@@ -33,6 +33,11 @@ namespace Steam {
             network_.on<Type>(std::forward<Fn>(callback));
         }
 
+        template<typename Request>
+        inline void execute(const Request& req) {
+            network_.execute(req);
+        }
+
         // Authorization Delegation
         inline bool anonymous_login() {
             return auth_.anonymous_login(network_);

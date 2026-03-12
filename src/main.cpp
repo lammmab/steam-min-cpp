@@ -10,6 +10,7 @@
 FILE_LOGGER();
 
 namespace Events = Steam::Events;
+namespace Commands = Steam::Commands;
 
 int main() {
     boost::asio::io_context io_ctx;
@@ -17,11 +18,18 @@ int main() {
 
     Steam::SteamClient client(std::move(connection));
 
+    client.client_on<Events::ClientLogonEvent>([](const Events::ClientLogonEvent& e) {
+        if (e.result.success == true) {
+            logger->info("Successfully logged on");
+        } else {
+            logger->info("Login failed");
+        }
+    });
+
     client.client_on<Events::ChannelSecuredEvent>([&client](const Events::ChannelSecuredEvent& e) {
         if (e.result.success == true) {
-            logger->info("Msg dispatching works");
-        } else {
-            logger->info("Msg dispatching still works but encryption is broken");
+            logger->info("Sucessfully secured channel");
+            client.execute(Commands::AnonymousLogin{});
         }
         /*
         logger->info("Sending anonymous login");

@@ -2,6 +2,7 @@
 #pragma once
 #include "base/msgbase.hpp"
 #include "base/generated/Stream.hpp"
+#include "base/packetbase.hpp"
 
 namespace Steam::Messaging::ClientMessages {
     template <typename TBody>

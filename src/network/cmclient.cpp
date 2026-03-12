@@ -6,8 +6,6 @@
 #include "utils/gzip/gzip_helpers.hpp"
 #include <boost/endian/conversion.hpp>
 
-#include "dispatch/dispatcher.hpp"
-
 FILE_LOGGER();
 
 using namespace Steam::Messaging;
@@ -56,7 +54,7 @@ void CMClient::consume_frame(const std::vector<uint8_t>& frame, bool encrypt) {
                 static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
             Steam::Dispatch::dispatch_proto(*this, *proto);
-            emit(*proto);
+            //emit(*proto);
         } else {
             // We're a struct msg
             logger->info("Received struct Msg");

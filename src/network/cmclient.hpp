@@ -19,6 +19,9 @@
 
 #include "crypto/crypto.hpp"
 
+#include "commands/router.hpp"
+#include "dispatch/dispatcher.hpp"
+
 namespace Steam::Messaging {
     class CMClient: public medooze::EventEmitter {
     public:
@@ -43,6 +46,17 @@ namespace Steam::Messaging {
         
         inline Steam::Crypto::EncryptionManager& crypto() {
             return crypto_;
+        }
+
+        template<typename Request>
+        inline void execute(const Request& req) {
+            using namespace Steam::Dispatch;
+
+            size_t id = Steam::Dispatch::request_id<Request>();
+            auto fn = Steam::Dispatch::g_request_router.table[id];
+
+            if (fn)
+                fn(*this, &req);
         }
 
         // This solution is super hacky; we will 100% want to correct this later and fix the base classes.
