@@ -1,8 +1,8 @@
 # To Do
 
 - implement get_product_info
-- forward declare where possible / clean up includes
 
+- forward declare where possible / clean up includes | Partial
 - clean up message headers, use an optimized Stream implementation, fix SteamUtils.hpp
 - uniform style, preferrably complying with C++ guidelines
 - optimize where possible (fixed-size arrays instead of vectors where possible, etc.)

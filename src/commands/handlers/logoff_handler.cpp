@@ -1,7 +1,6 @@
 #include "commands/register.hpp"
 #include "protogen/steammessages_clientserver_login.pb.h"
-#include "base/generated/SteamUtils.hpp"
-#include "base/generated/SteamUtils.hpp"
+#include "utils/steam_utils.hpp"
 
 #include "network/cmclient.hpp"
 

@@ -3,8 +3,6 @@
 #include "client/client.hpp"
 #include "network/connection/tcp.hpp"
 
-#include "events/events.h"
-
 #include "utils/macros.h"
 
 FILE_LOGGER();
@@ -18,7 +16,7 @@ int main() {
 
     Steam::SteamClient client(std::move(connection));
 
-    client.client_on<Events::ClientLogonEvent>([](const Events::ClientLogonEvent& res) {
+    client.on<Events::ClientLogonEvent>([](const Events::ClientLogonEvent& res) {
         if (res.ok()) {
             logger->info("Successfully logged on");
         } else {
@@ -26,7 +24,7 @@ int main() {
         }
     });
 
-    client.client_on<Events::ChannelSecuredEvent>([&client](const Events::ChannelSecuredEvent& res) {
+    client.on<Events::ChannelSecuredEvent>([&client](const Events::ChannelSecuredEvent& res) {
         if (res.ok()) {
             logger->info("Sucessfully secured channel");
             client.execute(Commands::AnonymousLogin{});

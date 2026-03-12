@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dispatch/table.hpp"
-#include "base/generated/SteamUtils.hpp"
+#include "utils/steam_utils.hpp"
 #include "base/packetbase.hpp"
 
 namespace Steam::Dispatch {
@@ -9,9 +9,9 @@ namespace Steam::Dispatch {
         Steam::Messaging::CMClient& client,
         const Steam::Messaging::Packets::PacketClientMsgProtobuf& packet) {
         
-        Steam::Internal::Enums::EMsg emsg = Steam::MsgUtil::get_msg(static_cast<uint32_t>(packet.MsgType()));
+        Steam::Internal::Enums::EMsg emsg = Steam::Utils::MsgUtil::get_msg(static_cast<uint32_t>(packet.MsgType()));
         uint32_t id = static_cast<uint32_t>(emsg);
-        if (id < MAX_EMSG)
+        if (id <= MAX_EMSG)
         {
             auto fn = g_dispatch.proto[id];
             if (fn)
@@ -24,7 +24,7 @@ namespace Steam::Dispatch {
         const Steam::Messaging::Packets::PacketMsg& packet)
     {
         uint32_t id = static_cast<uint32_t>(packet.MsgType());
-        if (id < MAX_EMSG)
+        if (id <= MAX_EMSG)
         {
             auto fn = g_dispatch.msg[id];
             if (fn) fn(client, packet);

@@ -2,7 +2,6 @@
 #include "network/cmclient.hpp"
 
 #include "protogen/steammessages_clientserver_login.pb.h"
-#include "base/generated/SteamUtils.hpp"
 #include "base/clientmsg.hpp"
 
 #include "events/events.h"

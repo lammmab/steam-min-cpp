@@ -1,7 +1,5 @@
 #include "commands/register.hpp"
 #include "protogen/steammessages_clientserver_login.pb.h"
-#include "base/generated/SteamUtils.hpp"
-#include "base/generated/SteamUtils.hpp"
 
 #include "network/cmclient.hpp"
 
@@ -19,7 +17,7 @@ static void exec_anon_logon(CMClient& client, const AnonymousLogin& req) {
 
     ClientMessages::MsgProto<CMsgClientLogon> msg(Enums::EMsg::ClientLogon);
 
-    SteamID steamID(
+    Steam::Internal::SteamID steamID(
         0,
         0,
         Enums::EUniverse::Public,

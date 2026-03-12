@@ -20,7 +20,7 @@ namespace Steam::Dispatch {
     using MsgHandlerFn =
         void(*)(Steam::Messaging::CMClient&, const Steam::Messaging::Packets::PacketMsg&);
 
-    constexpr size_t MAX_EMSG = 10000;
+    constexpr size_t MAX_EMSG = 12301;
 
     struct DispatchTable {
         std::array<ProtoHandlerFn, MAX_EMSG> proto{};

@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <cstdint>
 #include "network/cmclient.hpp"
-#include "auth/auth.hpp"
+
 namespace Steam {
     class SteamClient {
     public:
@@ -12,45 +12,40 @@ namespace Steam {
             : network_(std::move(connection)) {}
 
         ~SteamClient() {
-            if (auth_.logged_in()) logout();
-            if (network_.is_connected()) disconnect();
+            disconnect();
         }
 
         // TCP Connection / CMClient Delegation
+
+        // Connect to a Steam CM server via. the underlying connection
         inline void connect() {
             network_.start_session();
         };
+
+        // Disconnects from the connected Steam CM server via. the underlying connection
         inline void disconnect() {
             network_.shutdown();
         };
+
+        // Returns a bool corresponding to whether or not you are connected to a Steam CM server.
         inline bool is_connected() const {
             return network_.is_connected();
         };
         
+        // Connects to an emitted CMClient event.
         template<typename Type, typename Fn>
-        inline void client_on(Fn&& callback)
+        inline void on(Fn&& callback)
         {
             network_.on<Type>(std::forward<Fn>(callback));
         }
 
+        // Executes a command to the Steam CM server.
         template<typename Request>
         inline void execute(const Request& req) {
             network_.execute(req);
         }
 
-        // Authorization Delegation
-        inline bool anonymous_login() {
-            return auth_.anonymous_login(network_);
-        };
-        inline void logout() {
-            auth_.logout(network_);
-        };
-        inline bool logged_on() const {
-            return auth_.logged_in();
-        };
-
     private:
         Steam::Messaging::CMClient network_;
-        Steam::Authentication::Auth auth_;
     };
 }

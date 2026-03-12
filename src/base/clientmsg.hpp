@@ -1,7 +1,7 @@
 // GPT
 #pragma once
 #include "base/msgbase.hpp"
-#include "base/generated/Stream.hpp"
+#include "utils/stream.hpp"
 #include "base/packetbase.hpp"
 
 namespace Steam::Messaging::ClientMessages {
@@ -37,7 +37,7 @@ namespace Steam::Messaging::ClientMessages {
             const std::vector<byte>& data = packetMsg->GetData();
             size_t offset = packetMsg->bodyOffset;
 
-            Stream stream(data,offset, StreamingMode::Read);
+            Steam::Utils::Stream stream(data,offset);
 
             Body.Deserialize(stream);
 
@@ -62,7 +62,7 @@ namespace Steam::Messaging::ClientMessages {
 
         std::vector<byte> Serialize() const override 
         {
-            Stream stream(StreamingMode::Write);
+            Steam::Utils::Stream stream;
 
             Header.Serialize(stream);
             Body.Serialize(stream);
@@ -153,7 +153,7 @@ namespace Steam::Messaging::ClientMessages {
             const std::vector<byte>& data = packetMsg->GetData();
             size_t offset = packetMsg->bodyOffset;
 
-            Stream stream(data, offset, StreamingMode::Read);
+            Steam::Utils::Stream stream(data, offset);
 
             Body.ParseFromArray(data.data() + offset, data.size() - offset);
 
@@ -169,7 +169,7 @@ namespace Steam::Messaging::ClientMessages {
 
         std::vector<byte> Serialize() const override
         {
-            Stream stream(StreamingMode::Write);
+            Steam::Utils::Stream stream;
 
             Header.Serialize(stream);
 

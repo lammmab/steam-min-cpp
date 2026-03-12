@@ -4,7 +4,6 @@
 #include <cstdint>
 #include <memory>
 #include "base/generated/SteamLanguageInternal.hpp"
-#include "base/generated/Stream.hpp"
 
 namespace Steam::Messaging::Packets {
     // Packet interface (read-only, header + payload) 
@@ -28,7 +27,7 @@ namespace Steam::Messaging::Packets {
         PacketClientMsgProtobuf(Steam::Internal::Enums::EMsg eMsg, const std::vector<uint8_t>& data)
             : msgType(eMsg), payload(data) 
         {
-            Stream s(payload,StreamingMode::Read);
+            Steam::Utils::Stream s(payload);
             header.Deserialize(s);
             bodyOffset = s.Position();
         }
@@ -51,7 +50,7 @@ namespace Steam::Messaging::Packets {
         PacketClientMsg(Steam::Internal::Enums::EMsg eMsg, const std::vector<uint8_t>& data)
             : msgType(eMsg), payload(data) 
         {
-            Stream s(payload,StreamingMode::Read);
+            Steam::Utils::Stream s(payload);
             header.Deserialize(s);
             bodyOffset = s.Position();
         }
@@ -73,7 +72,7 @@ namespace Steam::Messaging::Packets {
         PacketMsg(Steam::Internal::Enums::EMsg eMsg, const std::vector<uint8_t>& data)
             : msgType(eMsg), payload(data) 
         {
-            Stream s(payload,StreamingMode::Read);
+            Steam::Utils::Stream s(payload);
             header.Deserialize(s);
             bodyOffset = s.Position();
         }

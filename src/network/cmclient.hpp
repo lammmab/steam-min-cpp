@@ -1,18 +1,7 @@
 #pragma once
 
-#include "events/event_emitter.h"
-#include "events/events.h"
-
 #include "network/connection/connection.hpp"
-#include <string>
-#include <memory>
-#include <exception>
-
-#include <cstdint>
-#include <vector>
-
-#include <atomic>
-#include <thread>
+#include "events/event_emitter.h"
 
 #include "base/packetbase.hpp"
 #include "base/msgbase.hpp"
@@ -21,6 +10,10 @@
 
 #include "commands/router.hpp"
 #include "dispatch/dispatcher.hpp"
+
+#include <memory>
+#include <cstdint>
+#include <vector>
 
 namespace Steam::Messaging {
     class CMClient: public medooze::EventEmitter {

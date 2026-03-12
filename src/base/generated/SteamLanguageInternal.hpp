@@ -8,16 +8,73 @@
 #include <vector>
 #include <iostream>
 
-#include "base/generated/Stream.hpp"
-#include "base/generated/SteamUtils.hpp"
+#include "utils/stream.hpp"
+#include "utils/steam_utils.hpp"
 #include "protogen/steammessages_base.pb.h"
 
 namespace Steam::Internal
 {
+
+	struct SteamID
+    {
+    private:
+        uint64_t value = 0;
+
+        static constexpr int ACCOUNT_ID_SHIFT   = 0;
+        static constexpr int INSTANCE_SHIFT     = 32;
+        static constexpr int ACCOUNT_TYPE_SHIFT = 52;
+        static constexpr int UNIVERSE_SHIFT     = 56;
+
+        static constexpr uint64_t ACCOUNT_ID_MASK   = 0xFFFFFFFFULL;
+        static constexpr uint64_t INSTANCE_MASK     = 0xFFFFFULL;
+        static constexpr uint64_t ACCOUNT_TYPE_MASK = 0xFULL;
+        static constexpr uint64_t UNIVERSE_MASK     = 0xFFULL;
+
+    public:
+        SteamID() = default;
+
+        SteamID(
+            uint32_t accountID,
+            uint32_t instance,
+            Steam::Internal::Enums::EUniverse universe,
+            Steam::Internal::Enums::EAccountType accountType)
+        {
+            value =
+                ((uint64_t)accountID << ACCOUNT_ID_SHIFT) |
+                ((uint64_t)instance << INSTANCE_SHIFT) |
+                ((uint64_t)accountType << ACCOUNT_TYPE_SHIFT) |
+                ((uint64_t)universe << UNIVERSE_SHIFT);
+        }
+
+        SteamID(uint64_t val) {
+            value = val;
+        }
+
+        uint64_t ConvertToUInt64() const
+        {
+            return value;
+        }
+    };
+
+    struct GameID
+    {
+    private:
+        uint64_t value;
+
+    public:
+        GameID() : value(0) {}
+        explicit GameID(uint64_t v) : value(v) {}
+
+        uint64_t ConvertToUInt64() const
+        {
+            return value;
+        }
+    };
+
 	struct ISteamSerializable
 	{
-		virtual void Serialize(Stream& stream) const = 0;
-		virtual void Deserialize( Stream& stream ) = 0;
+		virtual void Serialize(Steam::Utils::Stream& stream) const = 0;
+		virtual void Deserialize( Steam::Utils::Stream& stream ) = 0;
 		virtual ~ISteamSerializable() = default;
 	};
 
@@ -84,7 +141,7 @@ namespace Steam::Internal
 			msgSize = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(magic);
@@ -101,7 +158,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			magic = (uint32_t)stream.Read<int32_t>();
 			payloadSize = (uint16_t)stream.Read<int16_t>();
@@ -131,7 +188,7 @@ namespace Steam::Internal
 			serverLoad = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(challengeValue);
@@ -139,7 +196,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			challengeValue = (uint32_t)stream.Read<int32_t>();
 			serverLoad = (uint32_t)stream.Read<int32_t>();
@@ -157,14 +214,14 @@ namespace Steam::Internal
 			challengeValue = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(challengeValue);
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			challengeValue = (uint32_t)stream.Read<int32_t>();
 		}
@@ -177,13 +234,13 @@ namespace Steam::Internal
 		{
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 		}
 	};
@@ -195,13 +252,13 @@ namespace Steam::Internal
 		{
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 		}
 	};
@@ -213,13 +270,13 @@ namespace Steam::Internal
 		{
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 		}
 	};
@@ -243,7 +300,7 @@ namespace Steam::Internal
 			sourceJobID = UINT64_MAX;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)Msg);
@@ -252,7 +309,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			Msg = (Steam::Internal::Enums::EMsg)stream.Read<int32_t>();
 			targetJobID = (uint64_t)stream.Read<int64_t>();
@@ -298,7 +355,7 @@ namespace Steam::Internal
 			sessionID = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)Msg);
@@ -312,7 +369,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			Msg = (Steam::Internal::Enums::EMsg)stream.Read<int32_t>();
 			headerSize = (unsigned char)stream.Read<unsigned char>();
@@ -344,7 +401,7 @@ namespace Steam::Internal
 			proto = CMsgProtoBufHeader();
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 			std::string protoData;
 			if (!proto.SerializeToString(&protoData))
@@ -353,14 +410,14 @@ namespace Steam::Internal
 			}
 			headerLength = protoData.size();
 
-			stream.Write((int)Steam::MsgUtil::make_msg(Msg, true));
+			stream.Write((int)Steam::Utils::MsgUtil::make_msg(Msg, true));
 			stream.Write(headerLength);
 			stream.Write(protoData.data(), protoData.size());
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
-			Msg = (Steam::Internal::Enums::EMsg)Steam::MsgUtil::get_msg(static_cast<uint32_t>(stream.Read<int32_t>()));
+			Msg = (Steam::Internal::Enums::EMsg)Steam::Utils::MsgUtil::get_msg(static_cast<uint32_t>(stream.Read<int32_t>()));
 			headerLength = (int32_t)stream.Read<int32_t>();
 			if (headerLength < 0) throw std::out_of_range("Negative length");
 			std::vector<uint8_t> buffer(headerLength);
@@ -392,7 +449,7 @@ namespace Steam::Internal
 			proto = CMsgProtoBufHeader();
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 			std::string protoData;
 			if (!proto.SerializeToString(&protoData))
@@ -401,13 +458,13 @@ namespace Steam::Internal
 			}
 			headerLength = protoData.size();
 
-			stream.Write(Steam::MsgUtil::make_gc_msg(Msg, true));
+			stream.Write(Steam::Utils::MsgUtil::make_gc_msg(Msg, true));
 			stream.Write(headerLength);
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
-			Msg = (uint32_t)Steam::MsgUtil::get_gc_msg(static_cast<uint32_t>(stream.Read<int32_t>()));
+			Msg = (uint32_t)Steam::Utils::MsgUtil::get_gc_msg(static_cast<uint32_t>(stream.Read<int32_t>()));
 			headerLength = (int32_t)stream.Read<int32_t>();
 			if (headerLength < 0) throw std::out_of_range("Negative length");
 			
@@ -440,7 +497,7 @@ namespace Steam::Internal
 			sourceJobID = UINT64_MAX;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(headerVersion);
@@ -449,7 +506,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			headerVersion = (uint16_t)stream.Read<int16_t>();
 			targetJobID = (uint64_t)stream.Read<int64_t>();
@@ -466,13 +523,13 @@ namespace Steam::Internal
 		{
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 		}
 	};
@@ -489,14 +546,14 @@ namespace Steam::Internal
 			result = Steam::Internal::Enums::EResult::Invalid;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 		}
@@ -518,7 +575,7 @@ namespace Steam::Internal
 			universe = Steam::Internal::Enums::EUniverse::Invalid;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(protocolVersion);
@@ -526,7 +583,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			protocolVersion = (uint32_t)stream.Read<int32_t>();
 			universe = (Steam::Internal::Enums::EUniverse)stream.Read<int32_t>();
@@ -548,7 +605,7 @@ namespace Steam::Internal
 			keySize = 128;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(protocolVersion);
@@ -556,7 +613,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			protocolVersion = (uint32_t)stream.Read<int32_t>();
 			keySize = (uint32_t)stream.Read<int32_t>();
@@ -575,14 +632,14 @@ namespace Steam::Internal
 			result = Steam::Internal::Enums::EResult::Invalid;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 		}
@@ -624,13 +681,13 @@ namespace Steam::Internal
 		{
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 		}
 	};
@@ -647,14 +704,14 @@ namespace Steam::Internal
 			numBans = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(numBans);
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			numBans = (uint32_t)stream.Read<int32_t>();
 		}
@@ -682,7 +739,7 @@ namespace Steam::Internal
 			offline = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)appUsageEvent);
@@ -691,7 +748,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			appUsageEvent = (Steam::Internal::Enums::EAppUsageEvent)stream.Read<int32_t>();
 			gameID = (uint64_t)stream.Read<int64_t>();
@@ -717,7 +774,7 @@ namespace Steam::Internal
 			countGuestPassesToRedeem = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -726,7 +783,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			countGuestPassesToGive = (int32_t)stream.Read<int32_t>();
@@ -759,7 +816,7 @@ namespace Steam::Internal
 			dataLen = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamID);
@@ -769,7 +826,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamID = (uint64_t)stream.Read<int64_t>();
 			routingType = (Steam::Internal::Enums::EIntroducerRouting)stream.Read<int32_t>();
@@ -803,7 +860,7 @@ namespace Steam::Internal
 			timeStarted = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(accountType);
@@ -813,7 +870,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			accountType = (unsigned char)stream.Read<unsigned char>();
 			accountId = (uint64_t)stream.Read<int64_t>();
@@ -843,7 +900,7 @@ namespace Steam::Internal
 			sessionId = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -853,7 +910,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			collectingAny = (unsigned char)stream.Read<unsigned char>();
@@ -883,7 +940,7 @@ namespace Steam::Internal
 			countAttributes = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(sessionId);
@@ -893,7 +950,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			sessionId = (uint64_t)stream.Read<int64_t>();
 			timeEnded = (uint32_t)stream.Read<int32_t>();
@@ -914,14 +971,14 @@ namespace Steam::Internal
 			result = Steam::Internal::Enums::EResult::Invalid;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 		}
@@ -942,7 +999,7 @@ namespace Steam::Internal
 			countAttributes = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(sessionId);
@@ -950,7 +1007,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			sessionId = (uint64_t)stream.Read<int64_t>();
 			countAttributes = (int32_t)stream.Read<int32_t>();
@@ -973,14 +1030,14 @@ namespace Steam::Internal
 			gameId = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(gameId);
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			gameId = (uint64_t)stream.Read<int64_t>();
 		}
@@ -1008,7 +1065,7 @@ namespace Steam::Internal
 			countFriends = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1017,7 +1074,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			gameId = (uint64_t)stream.Read<int64_t>();
@@ -1037,14 +1094,14 @@ namespace Steam::Internal
 			flags = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(flags);
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			flags = (uint32_t)stream.Read<int32_t>();
 		}
@@ -1071,7 +1128,7 @@ namespace Steam::Internal
 			lifetimeMinutesPlayed = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1081,7 +1138,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			rank = (int32_t)stream.Read<int32_t>();
@@ -1120,7 +1177,7 @@ namespace Steam::Internal
 			timeBanExpires = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1133,7 +1190,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			reputationScore = (uint32_t)stream.Read<int32_t>();
@@ -1164,7 +1221,7 @@ namespace Steam::Internal
 			denyReason = Steam::Internal::Enums::EDenyReason::Unknown;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamId);
@@ -1172,7 +1229,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamId = (uint64_t)stream.Read<int64_t>();
 			denyReason = (Steam::Internal::Enums::EDenyReason)stream.Read<int32_t>();
@@ -1195,14 +1252,14 @@ namespace Steam::Internal
 			steamId = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamId);
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamId = (uint64_t)stream.Read<int64_t>();
 		}
@@ -1230,7 +1287,7 @@ namespace Steam::Internal
 			waitTilMapChange = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamId);
@@ -1239,7 +1296,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamId = (uint64_t)stream.Read<int64_t>();
 			denyReason = (Steam::Internal::Enums::EDenyReason)stream.Read<int32_t>();
@@ -1270,7 +1327,7 @@ namespace Steam::Internal
 			steamIdGroup = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamIdUser);
@@ -1278,7 +1335,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamIdUser = (uint64_t)stream.Read<int64_t>();
 			steamIdGroup = (uint64_t)stream.Read<int64_t>();
@@ -1314,7 +1371,7 @@ namespace Steam::Internal
 			clanRank = Steam::Internal::Enums::EClanRank::None;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamIdUser);
@@ -1324,7 +1381,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamIdUser = (uint64_t)stream.Read<int64_t>();
 			steamIdGroup = (uint64_t)stream.Read<int64_t>();
@@ -1352,7 +1409,7 @@ namespace Steam::Internal
 			isVoiceSpeaker = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1360,7 +1417,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
 			isVoiceSpeaker = (unsigned char)stream.Read<unsigned char>();
@@ -1416,7 +1473,7 @@ namespace Steam::Internal
 			numMembers = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1430,7 +1487,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
 			steamIdFriend = (uint64_t)stream.Read<int64_t>();
@@ -1469,7 +1526,7 @@ namespace Steam::Internal
 			chatMsgType = Steam::Internal::Enums::EChatEntryType::Invalid;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamIdChatter);
@@ -1478,7 +1535,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamIdChatter = (uint64_t)stream.Read<int64_t>();
 			steamIdChatRoom = (uint64_t)stream.Read<int64_t>();
@@ -1505,7 +1562,7 @@ namespace Steam::Internal
 			type = Steam::Internal::Enums::EChatInfoType::Unknown;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1513,7 +1570,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
 			type = (Steam::Internal::Enums::EChatInfoType)stream.Read<int32_t>();
@@ -1546,7 +1603,7 @@ namespace Steam::Internal
 			chatAction = Steam::Internal::Enums::EChatAction::Unknown;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1555,7 +1612,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
 			steamIdUserToActOn = (uint64_t)stream.Read<int64_t>();
@@ -1592,7 +1649,7 @@ namespace Steam::Internal
 			actionResult = Steam::Internal::Enums::EChatActionResult::Unknown;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1602,7 +1659,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
 			steamIdUserActedOn = (uint64_t)stream.Read<int64_t>();
@@ -1630,7 +1687,7 @@ namespace Steam::Internal
 			type = Steam::Internal::Enums::EChatInfoType::Unknown;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(steamIdChat);
@@ -1638,7 +1695,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
 			type = (Steam::Internal::Enums::EChatInfoType)stream.Read<int32_t>();
@@ -1671,7 +1728,7 @@ namespace Steam::Internal
 			ignore = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(mySteamId);
@@ -1680,7 +1737,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			mySteamId = (uint64_t)stream.Read<int64_t>();
 			steamIdFriend = (uint64_t)stream.Read<int64_t>();
@@ -1707,7 +1764,7 @@ namespace Steam::Internal
 			result = Steam::Internal::Enums::EResult::Invalid;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(friendId);
@@ -1715,7 +1772,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			friendId = (uint64_t)stream.Read<int64_t>();
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
@@ -1740,7 +1797,7 @@ namespace Steam::Internal
 			secMaxReconnectHint = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1749,7 +1806,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			secMinReconnectHint = (int32_t)stream.Read<int32_t>();
@@ -1788,7 +1845,7 @@ namespace Steam::Internal
 			serverRealTime = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1800,7 +1857,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			outOfGameHeartbeatRateSec = (int32_t)stream.Read<int32_t>();
@@ -1829,7 +1886,7 @@ namespace Steam::Internal
 			eServerTypeUnavailable = Steam::Internal::Enums::EServerType::First;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(jobidSent);
@@ -1838,7 +1895,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			jobidSent = (uint64_t)stream.Read<int64_t>();
 			eMsgSent = (uint32_t)stream.Read<int32_t>();
@@ -1903,7 +1960,7 @@ namespace Steam::Internal
 			steamIdInvited = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)chatRoomType);
@@ -1919,7 +1976,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			chatRoomType = (Steam::Internal::Enums::EChatRoomType)stream.Read<int32_t>();
 			gameId = (uint64_t)stream.Read<int64_t>();
@@ -1963,7 +2020,7 @@ namespace Steam::Internal
 			steamIdFriendChat = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write((int)result);
@@ -1973,7 +2030,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();
 			steamIdChat = (uint64_t)stream.Read<int64_t>();
@@ -1997,7 +2054,7 @@ namespace Steam::Internal
 			count = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(marketingMessageUpdateTime);
@@ -2005,7 +2062,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			marketingMessageUpdateTime = (uint32_t)stream.Read<int32_t>();
 			count = (uint32_t)stream.Read<int32_t>();
@@ -2024,14 +2081,14 @@ namespace Steam::Internal
 			appId = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(appId);
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			appId = (uint32_t)stream.Read<int32_t>();
 		}
@@ -2055,7 +2112,7 @@ namespace Steam::Internal
 			length = 0;
 		}
 
-		void Serialize(Stream& stream) const
+		void Serialize(Steam::Utils::Stream& stream) const
 		{
 
 			stream.Write(appId);
@@ -2064,7 +2121,7 @@ namespace Steam::Internal
 
 		}
 
-		void Deserialize( Stream& stream )
+		void Deserialize( Steam::Utils::Stream& stream )
 		{
 			appId = (uint32_t)stream.Read<int32_t>();
 			result = (Steam::Internal::Enums::EResult)stream.Read<int32_t>();

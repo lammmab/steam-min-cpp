@@ -1,15 +1,11 @@
 #include "network/cmclient.hpp"
-#include <iostream>
 #include "utils/macros.h"
-#include "protogen/steammessages_clientserver_login.pb.h"
-#include "base/generated/SteamUtils.hpp"
-#include "utils/gzip/gzip_helpers.hpp"
-#include <boost/endian/conversion.hpp>
+
+#include <exception>
 
 FILE_LOGGER();
 
 using namespace Steam::Messaging;
-using GZip = Steam::Utils::GZip;
 
 // Connect via TCP, then start message loop
 void CMClient::start_session() {
@@ -38,16 +34,16 @@ void CMClient::consume_frame(const std::vector<uint8_t>& frame, bool encrypt) {
     try {
         if (is_encryption_msg(emsg)) {
             // We're a raw Msg
-            auto raw = std::make_unique<Packets::PacketMsg>(
+            Packets::PacketMsg raw(
                 static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
-            Steam::Dispatch::dispatch_msg(*this,*raw);
-        } else if (MsgUtil::is_protobuf_msg(emsg)) {
+            Steam::Dispatch::dispatch_msg(*this,raw);
+        } else if (Steam::Utils::MsgUtil::is_protobuf_msg(emsg)) {
             // We're a protobuf Msg
-            auto proto = std::make_unique<Packets::PacketClientMsgProtobuf>(
+            Packets::PacketClientMsgProtobuf proto(
                 static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
-            Steam::Dispatch::dispatch_proto(*this, *proto);
+            Steam::Dispatch::dispatch_proto(*this, proto);
         } else {
             // We're a struct msg
             /*logger->info("Received struct Msg");
@@ -67,10 +63,10 @@ void CMClient::send_msg_impl(std::vector<byte> buffer)
     if (channel_secured_) {
         buffer = crypto_.process_outgoing_encrypted_message(buffer);
     }
-    logger->info("Sending buffer of length {}", buffer.size());
     connection_->async_send(buffer);
 }
 
+// Shuts down the internal CMClient
 void CMClient::shutdown() {
     if (connection_ && connection_->is_connected())
         connection_->network_close();

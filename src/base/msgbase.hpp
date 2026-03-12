@@ -79,7 +79,7 @@ namespace Steam::Messaging::Messages {
         virtual bool IsProto() const = 0;
         virtual Steam::Internal::Enums::EMsg MsgType() const = 0;
 
-        std::optional<SteamID> steam_id;
+        std::optional<Steam::Internal::SteamID> steam_id;
         int SessionID = 0;
         uint64_t targetJobID = 0;
         uint64_t sourceJobID = 0;
@@ -87,7 +87,7 @@ namespace Steam::Messaging::Messages {
         MsgBaseHdr(size_t reserve = 0) : MsgBase(reserve), Header() {}
 
         virtual std::vector<uint8_t> Serialize() const {
-            Stream stream(StreamingMode::Write);
+            Steam::Utils::Stream stream;
             Header.Serialize(stream);
             stream.Write(payload);
             return stream.MoveBuffer();
