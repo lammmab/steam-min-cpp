@@ -9,6 +9,8 @@
 
 FILE_LOGGER();
 
+namespace Events = Steam::Events;
+
 int main() {
     boost::asio::io_context io_ctx;
     auto connection = std::make_unique<Steam::Networking::TCPConnection>(io_ctx);
@@ -20,7 +22,7 @@ int main() {
         io_ctx.run();
     });
 
-    client.client_on<Steam::Events::ChannelSecuredEvent>([&client](const Steam::Events::ChannelSecuredEvent&) {
+    client.client_on<Events::ChannelSecuredEvent>([&client](const Events::ChannelSecuredEvent&) {
         logger->info("Sending anonymous login");
         if (client.anonymous_login()) {
             ;
@@ -28,7 +30,7 @@ int main() {
             logger->info("Login failed");
         }
     });
-    client.client_on<Steam::Events::ClientLogonEvent>([](const Steam::Events::ClientLogonEvent&) {
+    client.client_on<Events::ClientLogonEvent>([](const Events::ClientLogonEvent&) {
         logger->info("Login successful!");
     });
 
