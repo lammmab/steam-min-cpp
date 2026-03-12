@@ -355,6 +355,7 @@ namespace Steam::Internal
 
 			stream.Write((int)Steam::MsgUtil::make_msg(Msg, true));
 			stream.Write(headerLength);
+			stream.Write(protoData.data(), protoData.size());
 		}
 
 		void Deserialize( Stream& stream )

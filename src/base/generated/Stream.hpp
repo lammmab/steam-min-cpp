@@ -90,6 +90,12 @@ public:
         buffer.insert(buffer.end(), data, data + size);
     }
 
+    void Write(const void* data, size_t size)
+    {
+        const uint8_t* ptr = static_cast<const uint8_t*>(data);
+        buffer.insert(buffer.end(), ptr, ptr + size);
+    }
+
     // -----------------------
     // Reading (little-endian)
     // -----------------------

@@ -1,5 +1,8 @@
 #pragma once
-#include "utils/event_emitter.h"
+
+#include "events/event_emitter.h"
+#include "events/events.h"
+
 #include "network/connection/connection.hpp"
 #include <string>
 #include <memory>
@@ -33,6 +36,19 @@ namespace Steam::Messaging {
         inline bool is_connected() const {
             return connection_->is_connected();
         }
+
+        inline bool is_channel_secured() const {
+            return channel_secured_;
+        }
+
+        // This solution is super hacky; we will 100% want to correct this later and fix the base classes.
+        template<typename THdr>
+        inline void send_msg(const Messages::MsgBaseHdr<THdr>& msg)
+        {
+            send_msg_impl(msg.Serialize());
+        }
+
+        void send_msg_impl(std::vector<byte> buffer);
         
     private:
 
@@ -44,12 +60,7 @@ namespace Steam::Messaging {
                 emsg_code == (uint32_t)Steam::Internal::Enums::EMsg::ChannelEncryptResult
             );
         }
-
         
-        template<typename TBody>
-        void send_msg(const Steam::Messaging::ClientMessages::Msg<TBody>& msg);
-        
-
         void rcv_msg_proto(const Steam::Messaging::Packets::PacketClientMsgProtobuf& msg);
         void rcv_msg(const Steam::Messaging::Packets::PacketMsg& msg);
         // Add handling for struct messages

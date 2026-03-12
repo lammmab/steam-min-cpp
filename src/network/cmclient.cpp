@@ -1,6 +1,8 @@
 #include "network/cmclient.hpp"
 #include <iostream>
 #include "utils/macros.h"
+#include "protogen/steammessages_clientserver_login.pb.h"
+#include "base/generated/SteamUtils.hpp"
 
 FILE_LOGGER();
 
@@ -24,6 +26,7 @@ void CMClient::start_session() {
 
 // Start consuming TCP messages
 void CMClient::consume_frame(const std::vector<uint8_t>& frame) {
+    logger->info("Received frame of size {}", frame.size());
     if (frame.size() < 4) return;
     std::vector<uint8_t> data = frame;
 
@@ -36,18 +39,21 @@ void CMClient::consume_frame(const std::vector<uint8_t>& frame) {
     try {
         if (is_encryption_msg(emsg)) {
             // We're a raw Msg
+            logger->info("Received raw Msg");
             auto raw = std::make_unique<Packets::PacketMsg>(
                 static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
             emit(*raw);
         } else if (MsgUtil::is_protobuf_msg(emsg)) {
             // We're a protobuf Msg
+            logger->info("Received proto Msg");
             auto proto = std::make_unique<Packets::PacketClientMsgProtobuf>(
                 static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
             emit(*proto);
         } else {
             // We're a struct msg
+            logger->info("Received struct Msg");
             auto str   = std::make_unique<Packets::PacketClientMsg>(
                 static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
@@ -70,11 +76,22 @@ void CMClient::setup_handlers() {
 }
 
 void CMClient::rcv_msg_proto(const Packets::PacketClientMsgProtobuf& msg) {
-    logger->info("Payload preview: {:02X} {:02X} {:02X} {:02X}", 
-                 msg.payload.size() > 0 ? msg.payload[0] : 0,
-                 msg.payload.size() > 1 ? msg.payload[1] : 0,
-                 msg.payload.size() > 2 ? msg.payload[2] : 0,
-                 msg.payload.size() > 3 ? msg.payload[3] : 0);
+    Steam::Internal::Enums::EMsg emsg = Steam::MsgUtil::get_msg(static_cast<uint32_t>(msg.MsgType()));
+    switch (emsg) {
+        case Steam::Internal::Enums::EMsg::ClientLogOnResponse: {
+            ClientMessages::MsgProto<CMsgClientLogonResponse> response(msg);
+            if (response.Body.eresult() == static_cast<uint32_t>(Steam::Internal::Enums::EResult::OK)) {
+                emit(Steam::Events::ClientLogonEvent{});
+            } else {
+                logger->error("Logon to Steam servers failed");
+            }
+            break;
+        }
+        default: {
+            logger->info("No handling for protobuf msg (EMsg {}) implemented.", static_cast<uint32_t>(emsg));
+            break;
+        }
+    }
 }
 
 // Receives a PacketMsg with the normal MsgHdr
@@ -94,6 +111,7 @@ void CMClient::rcv_msg(const Packets::PacketMsg& msg) {
                 if (res.Body.result == Steam::Internal::Enums::EResult::OK) {
                     logger->info("CM channel secured");
                     channel_secured_ = true;
+                    emit(Steam::Events::ChannelSecuredEvent{});
                 } else {
                     logger->info("Encryption handshake failed");
                 }
@@ -109,15 +127,12 @@ void CMClient::rcv_msg(const Packets::PacketMsg& msg) {
     }
 }
 
-template<typename TBody>
-void CMClient::send_msg(const ClientMessages::Msg<TBody>& msg)
+void CMClient::send_msg_impl(std::vector<byte> buffer)
 {
-    auto buffer = msg.Serialize();
-
     if (channel_secured_) {
         buffer = crypto_.process_outgoing_encrypted_message(buffer);
     }
-
+    logger->info("Sending buffer of length {}", buffer.size());
     connection_->async_send(buffer);
 }
 
