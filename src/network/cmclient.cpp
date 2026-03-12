@@ -3,10 +3,13 @@
 #include "utils/macros.h"
 #include "protogen/steammessages_clientserver_login.pb.h"
 #include "base/generated/SteamUtils.hpp"
+#include "utils/gzip/gzip_helpers.hpp"
+#include <boost/endian/conversion.hpp>
 
 FILE_LOGGER();
 
 using namespace Steam::Messaging;
+using GZip = Steam::Utils::GZip;
 
 // Connect via TCP, then start message loop
 void CMClient::start_session() {
@@ -25,12 +28,12 @@ void CMClient::start_session() {
 }
 
 // Start consuming TCP messages
-void CMClient::consume_frame(const std::vector<uint8_t>& frame) {
+void CMClient::consume_frame(const std::vector<uint8_t>& frame, bool encrypt) {
     logger->info("Received frame of size {}", frame.size());
     if (frame.size() < 4) return;
     std::vector<uint8_t> data = frame;
 
-    if (channel_secured_) {
+    if (encrypt && channel_secured_) {
         data = crypto_.process_incoming_encrypted_message(frame);
     }
 
@@ -75,10 +78,54 @@ void CMClient::setup_handlers() {
     });
 }
 
+bool read_frame(
+    const std::vector<uint8_t>& payload,
+    size_t& offset,
+    std::vector<uint8_t>& out)
+{
+    if (offset + sizeof(uint32_t) > payload.size())
+        return false;
+
+    uint32_t subSize;
+    memcpy(&subSize, payload.data() + offset, sizeof(uint32_t));
+    offset += sizeof(uint32_t);
+
+    subSize = boost::endian::native_to_little(subSize);
+
+    if (offset + subSize > payload.size())
+        return false;
+
+    out.assign(
+        payload.begin() + offset,
+        payload.begin() + offset + subSize
+    );
+
+    offset += subSize;
+    return true;
+}
+
+void CMClient::parse_multi(const Packets::PacketClientMsgProtobuf& msg) {
+    ClientMessages::MsgProto<CMsgMulti> multi(msg);
+    std::vector<uint8_t> payload(multi.Body.message_body().begin(), multi.Body.message_body().end());
+    size_t size = multi.Body.size_unzipped();
+    if (size > 0) payload = GZip::gzip_decompress(payload,size);
+    size_t offset = 0;
+    std::vector<uint8_t> frame;
+
+    while (read_frame(payload, offset, frame))
+    {
+        consume_frame(frame,false); // Override the default encryption as multi msgs are decrypted at this point
+    }
+
+}
+
 void CMClient::rcv_msg_proto(const Packets::PacketClientMsgProtobuf& msg) {
     Steam::Internal::Enums::EMsg emsg = Steam::MsgUtil::get_msg(static_cast<uint32_t>(msg.MsgType()));
     switch (emsg) {
-        case Steam::Internal::Enums::EMsg::ClientLogOnResponse: {
+        case Steam::Internal::Enums::EMsg::Multi: {
+            parse_multi(msg);
+            break;
+        } case Steam::Internal::Enums::EMsg::ClientLogOnResponse: {
             ClientMessages::MsgProto<CMsgClientLogonResponse> response(msg);
             if (response.Body.eresult() == static_cast<uint32_t>(Steam::Internal::Enums::EResult::OK)) {
                 emit(Steam::Events::ClientLogonEvent{});

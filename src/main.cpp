@@ -28,6 +28,9 @@ int main() {
             logger->info("Login failed");
         }
     });
+    client.client_on<Steam::Events::ClientLogonEvent>([](const Steam::Events::ClientLogonEvent&) {
+        logger->info("Login successful!");
+    });
 
     std::cin.get();
 

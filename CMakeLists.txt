@@ -48,15 +48,12 @@ CPMAddPackage(
 	OPTIONS       	"CRYPTOPP_BUILD_TESTING OFF" "CRYPTOPP_INSTALL OFF"
 )
 
-
 target_link_libraries(SteamClient PRIVATE 
     protobuf::libprotobuf
     spdlog::spdlog_header_only
     CURL::libcurl
     cryptopp::cryptopp
     Boost::system
-    #OpenSSL::SSL
-    #OpenSSL::Crypto
 )
 
 target_include_directories(SteamClient PRIVATE ${protobuf_SOURCE_DIR}/src)
