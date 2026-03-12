@@ -17,22 +17,31 @@ int main() {
 
     Steam::SteamClient client(std::move(connection));
 
-    client.connect();
-    std::thread io_thread([&io_ctx]() {
-        io_ctx.run();
-    });
-
-    client.client_on<Events::ChannelSecuredEvent>([&client](const Events::ChannelSecuredEvent&) {
+    client.client_on<Events::ChannelSecuredEvent>([&client](const Events::ChannelSecuredEvent& e) {
+        if (e.result.success == true) {
+            logger->info("Msg dispatching works");
+        } else {
+            logger->info("Msg dispatching still works but encryption is broken");
+        }
+        /*
         logger->info("Sending anonymous login");
         if (client.anonymous_login()) {
             ;
         } else {
             logger->info("Login failed");
-        }
+        }*/
     });
+    
+    client.connect();
+    std::thread io_thread([&io_ctx]() {
+        io_ctx.run();
+    });
+
+    
+    /*
     client.client_on<Events::ClientLogonEvent>([](const Events::ClientLogonEvent&) {
         logger->info("Login successful!");
-    });
+    });*/
 
     std::cin.get();
 

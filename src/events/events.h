@@ -1,8 +1,18 @@
 #pragma once
 
+#include <string>
+
 namespace Steam::Events {
-    struct ChannelSecuredEvent {};
-    struct ClientLogonEvent {};
+    struct EventResult {
+        bool success;
+        std::string what; // If not success; this will be filled.
+    };
+    struct ChannelSecuredEvent {
+        EventResult result;
+    };
+    struct ClientLogonEvent {
+        EventResult result;
+    };
 }
 
 namespace Steam::Commands {

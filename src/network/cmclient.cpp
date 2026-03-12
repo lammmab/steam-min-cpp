@@ -6,6 +6,8 @@
 #include "utils/gzip/gzip_helpers.hpp"
 #include <boost/endian/conversion.hpp>
 
+#include "dispatch/dispatcher.hpp"
+
 FILE_LOGGER();
 
 using namespace Steam::Messaging;
@@ -46,13 +48,14 @@ void CMClient::consume_frame(const std::vector<uint8_t>& frame, bool encrypt) {
             auto raw = std::make_unique<Packets::PacketMsg>(
                 static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
-            emit(*raw);
+            Steam::Dispatch::dispatch_msg(*this,*raw);
         } else if (MsgUtil::is_protobuf_msg(emsg)) {
             // We're a protobuf Msg
             logger->info("Received proto Msg");
             auto proto = std::make_unique<Packets::PacketClientMsgProtobuf>(
                 static_cast<Steam::Internal::Enums::EMsg>(emsg), data
             );
+            Steam::Dispatch::dispatch_proto(*this, *proto);
             emit(*proto);
         } else {
             // We're a struct msg
@@ -72,11 +75,8 @@ void CMClient::setup_handlers() {
     on<Packets::PacketClientMsgProtobuf>([this](const Packets::PacketClientMsgProtobuf& msg) {
         rcv_msg_proto(msg);
     });
-
-    on<Packets::PacketMsg>([this](const Packets::PacketMsg& msg) {
-        rcv_msg(msg);
-    });
 }
+/*
 
 bool read_frame(
     const std::vector<uint8_t>& payload,
@@ -118,12 +118,12 @@ void CMClient::parse_multi(const Packets::PacketClientMsgProtobuf& msg) {
     }
 
 }
-
+*/
 void CMClient::rcv_msg_proto(const Packets::PacketClientMsgProtobuf& msg) {
     Steam::Internal::Enums::EMsg emsg = Steam::MsgUtil::get_msg(static_cast<uint32_t>(msg.MsgType()));
     switch (emsg) {
         case Steam::Internal::Enums::EMsg::Multi: {
-            parse_multi(msg);
+            //parse_multi(msg);
             break;
         } case Steam::Internal::Enums::EMsg::ClientLogOnResponse: {
             ClientMessages::MsgProto<CMsgClientLogonResponse> response(msg);
@@ -138,39 +138,6 @@ void CMClient::rcv_msg_proto(const Packets::PacketClientMsgProtobuf& msg) {
             logger->info("No handling for protobuf msg (EMsg {}) implemented.", static_cast<uint32_t>(emsg));
             break;
         }
-    }
-}
-
-// Receives a PacketMsg with the normal MsgHdr
-void CMClient::rcv_msg(const Packets::PacketMsg& msg) {
-    uint32_t emsg = static_cast<uint32_t>(msg.MsgType());
-
-    try {
-        switch(msg.MsgType()) {
-            case Steam::Internal::Enums::EMsg::ChannelEncryptRequest: {
-                ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResponse> response = 
-                    crypto_.generate_encryption_response(msg);
-                send_msg(response);
-                break;
-            }
-            case Steam::Internal::Enums::EMsg::ChannelEncryptResult: {
-                ClientMessages::Msg<Steam::Internal::MsgChannelEncryptResult> res(msg);
-                if (res.Body.result == Steam::Internal::Enums::EResult::OK) {
-                    logger->info("CM channel secured");
-                    channel_secured_ = true;
-                    emit(Steam::Events::ChannelSecuredEvent{});
-                } else {
-                    logger->info("Encryption handshake failed");
-                }
-                break;
-            } 
-            default: {
-                logger->info("No handling for msg (EMsg {}) implemented.", emsg);
-                break;
-            }
-        }
-    } catch (const std::exception& e) {
-        logger->error("Failed to handle packet (EMsg {}): {}", emsg,e.what());
     }
 }
 

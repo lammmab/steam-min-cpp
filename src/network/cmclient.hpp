@@ -40,6 +40,10 @@ namespace Steam::Messaging {
         inline bool is_channel_secured() const {
             return channel_secured_;
         }
+        
+        inline Steam::Crypto::EncryptionManager& crypto() {
+            return crypto_;
+        }
 
         // This solution is super hacky; we will 100% want to correct this later and fix the base classes.
         template<typename THdr>
@@ -48,12 +52,12 @@ namespace Steam::Messaging {
             send_msg_impl(msg.Serialize());
         }
 
-        void send_msg_impl(std::vector<byte> buffer);
-        void parse_multi(const Packets::PacketClientMsgProtobuf& msg);
-
-    private:
-
         void consume_frame(const std::vector<uint8_t>& frame, bool encrypt = true);
+        
+        private:
+        void parse_multi(const Packets::PacketClientMsgProtobuf& msg);
+        void send_msg_impl(std::vector<byte> buffer);
+        
         inline const bool is_encryption_msg(uint32_t emsg_code) {
             return (
                 emsg_code == (uint32_t)Steam::Internal::Enums::EMsg::ChannelEncryptRequest ||
@@ -63,7 +67,6 @@ namespace Steam::Messaging {
         }
         
         void rcv_msg_proto(const Steam::Messaging::Packets::PacketClientMsgProtobuf& msg);
-        void rcv_msg(const Steam::Messaging::Packets::PacketMsg& msg);
         // Add handling for struct messages
 
         void setup_handlers();
