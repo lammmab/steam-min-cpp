@@ -4,11 +4,12 @@
 #include "network/connection/tcp.hpp"
 
 #include "utils/macros.h"
-
+#include "utils/vdf/vdf.hpp"
 FILE_LOGGER();
 
 namespace Events = Steam::Events;
 namespace Commands = Steam::Commands;
+namespace VDF = Steam::Utils::VDF;
 
 int main() {
     boost::asio::io_context io_ctx;
@@ -16,9 +17,43 @@ int main() {
 
     Steam::SteamClient client(std::move(connection));
 
-    client.on<Events::ClientLogonEvent>([](const Events::ClientLogonEvent& res) {
+    client.on<Events::MsgNotImplementedEvent>([&client](const Events::MsgNotImplementedEvent& e) {
+        logger->info("Msg with id {} is not implemented.",e.emsg);
+    });
+
+    client.on<Events::ProductInfoResult>([](const Events::ProductInfoResult& res) {
+        logger->info("Received ProductInfoResult");
+        logger->info("Apps: {}", res.apps.size());
+        logger->info("Packages: {}", res.packages.size());
+
+        for (const auto& app : res.apps)
+        {
+            logger->info("AppID: {} | SHA: {}", app.appid, app.sha);
+
+            try {
+                const auto& common = app.appinfo.at("common").as_object();
+                const auto& name   = common.at("name").as_string();
+
+                std::string text = VDF::stringify(app.appinfo);
+                logger->info("\n{}", text);
+            }
+            catch (...) {
+                logger->info("<not found>");
+            }
+        }
+
+        for (const auto& pkg : res.packages)
+        {
+            logger->info("PackageID: {} | SHA: {}", pkg.packageid, pkg.sha);
+        }
+    });
+
+    client.on<Events::ClientLogonEvent>([&client](const Events::ClientLogonEvent& res) {
         if (res.ok()) {
+            uint32_t app = 440;
             logger->info("Successfully logged on");
+            logger->info("Attempting to get information about this app ID: {}",app);
+            client.execute(Commands::GetProductInfo{app,res.steamid,res.client_sessionid});
         } else {
             logger->info(res.what());
         }

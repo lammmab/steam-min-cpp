@@ -1,12 +1,9 @@
 # To Do
 
+- reduce per-command boilerplate by automatically adding the sessionid and steamid upon protomsg creation (helper?)
 - implement get_product_info
 
-- forward declare where possible / clean up includes | Partial
-- clean up message headers, use an optimized Stream implementation, fix SteamUtils.hpp
-- uniform style, preferrably complying with C++ guidelines
 - optimize where possible (fixed-size arrays instead of vectors where possible, etc.)
-- ensure extensibility and clarity for future contributers
 - implement UDPConnection and fix websocketconnection | Not planned ; another contributor can fix up the WebsocketConnection and create UDPConnection
 
 # Done

@@ -16,7 +16,7 @@ Please not that currently only TCP connections are supported.
 - libcurl
 - boost
 
-## Minimal Usage:
+## Example Usage:
 
 ```cpp
 boost::asio::io_context io_ctx; // Create the Asio context for low-level TCP work
@@ -24,10 +24,18 @@ auto connection = std::make_unique<Steam::Networking::TCPConnection>(io_ctx); //
 
 Steam::SteamClient client(std::move(connection)); // Pass ownership of the connection and create a SteamClient
 
-client.connect(); // Connect to the TCP server / kick off the encryption phase
 std::thread io_thread([&io_ctx]() {
     io_ctx.run(); // Run the io thread
 });
+
+client.connect(); // Connect to the TCP server / kick off the encryption phase
+
+client.on<Events::ChannelSecuredEvent>([&client](const Events::ChannelSecuredEvent& res) {
+    if (res.ok()) {
+        client.execute(Commands::AnonymousLogin{});
+    }
+}); // Connect to the encryption result and send an anonymous login
+
 client.disconnect() // Close the connection.
 ```
 

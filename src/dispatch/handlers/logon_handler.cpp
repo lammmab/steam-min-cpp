@@ -3,8 +3,6 @@
 
 #include "protogen/steammessages_clientserver_login.pb.h"
 
-#include "events/events.h"
-
 using namespace Steam;
 using namespace Steam::Messaging;
 
@@ -22,7 +20,9 @@ static void handle_logon_response(
     client.emit(Steam::Events::ClientLogonEvent{
         success
             ? Steam::Events::EventResult::ok()
-            : Steam::Events::EventResult::fail("Client login failed; incorrect information?")
+            : Steam::Events::EventResult::fail("Client login failed; incorrect information?"),
+        msg.Body.client_supplied_steamid(),
+        msg.Header.proto.client_sessionid()
     });
 }
 

@@ -4,8 +4,6 @@
 #include "protogen/steammessages_clientserver_login.pb.h"
 #include "base/clientmsg.hpp"
 
-#include "events/events.h"
-
 #include "utils/gzip/gzip_helpers.hpp"
 #include <boost/endian/conversion.hpp>
 

@@ -47,5 +47,6 @@ namespace Steam {
 
     private:
         Steam::Messaging::CMClient network_;
+        
     };
 }

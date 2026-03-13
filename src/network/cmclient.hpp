@@ -16,6 +16,18 @@
 #include <vector>
 
 namespace Steam::Messaging {
+    class JobIDs {
+        using Job = std::function<void(const Steam::Messaging::Packets::IPacketMsg&)>;
+        
+        public:
+            static uint64_t generate_jobid() {
+                return next_jobid_++;
+            }
+        private:
+            inline static uint64_t next_jobid_ = 0;
+            inline static std::unordered_map<uint64_t,Job> pending_jobs_;
+    };
+
     class CMClient: public medooze::EventEmitter {
     public:
         CMClient(std::unique_ptr<Steam::Networking::IConnection> connection)

@@ -182,5 +182,13 @@ namespace Steam::Messaging::ClientMessages {
 
             return stream.MoveBuffer();
         }
+
+        void SetSourceJobID(uint64_t id) {
+            Header.proto.set_jobid_source(id);
+        }
+
+        void SetTargetJobID(uint64_t id) {
+            Header.proto.set_jobid_target(id);
+        }
     };
 }
