@@ -1,6 +1,0 @@
-name: RTD
-channels:
-  - conda-forge
-  - defaults
-dependencies:
-  - doxygen=1.16.1
