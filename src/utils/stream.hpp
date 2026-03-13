@@ -29,10 +29,6 @@ namespace Steam::Utils {
             : readBuffer(&input), buffer(), position(offset)
         {}
 
-        // -----------------------
-        // State
-        // -----------------------
-
         size_t Position() const { return position; }
 
         size_t Length() const
@@ -49,10 +45,6 @@ namespace Steam::Utils {
         {
             return std::move(buffer);
         }
-
-        // -----------------------
-        // Writing (little-endian)
-        // -----------------------
 
         template<typename T>
         void Write(T value)
@@ -87,10 +79,6 @@ namespace Steam::Utils {
             const uint8_t* ptr = static_cast<const uint8_t*>(data);
             buffer.insert(buffer.end(), ptr, ptr + size);
         }
-
-        // -----------------------
-        // Reading (little-endian)
-        // -----------------------
 
         template<typename T>
         T Read()

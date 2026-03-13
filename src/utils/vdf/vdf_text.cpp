@@ -114,4 +114,45 @@ namespace Steam::Utils::VDF {
         TextParser parser(text);
         return parser.parse();
     }
+
+    static void stringify_object(const Object& obj,std::string& out,int indent) 
+    {
+        std::string pad(indent, '\t');
+
+        for (const auto& [key, node] : obj)
+        {
+            const auto& val = node.value;
+
+            if (std::holds_alternative<Object>(val))
+            {
+                out += pad + "\"" + key + "\"\n";
+                out += pad + "{\n";
+
+                stringify_object(std::get<Object>(val), out, indent + 1);
+
+                out += pad + "}\n";
+            }
+            else if (std::holds_alternative<std::string>(val))
+            {
+                out += pad + "\"" + key + "\" \"" +
+                    std::get<std::string>(val) + "\"\n";
+            }
+            else if (std::holds_alternative<int32_t>(val))
+            {
+                out += pad + "\"" + key + "\" \"" +
+                    std::to_string(std::get<int32_t>(val)) + "\"\n";
+            }
+            else if (std::holds_alternative<uint64_t>(val))
+            {
+                out += pad + "\"" + key + "\" \"" +
+                    std::to_string(std::get<uint64_t>(val)) + "\"\n";
+            }
+            else if (std::holds_alternative<float>(val))
+            {
+                out += pad + "\"" + key + "\" \"" +
+                    std::to_string(std::get<float>(val)) + "\"\n";
+            }
+        }
+    }
 }
+

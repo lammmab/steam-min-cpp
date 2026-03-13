@@ -62,13 +62,13 @@ namespace Steam::Events {
         struct ProductAppInfo {
             uint32_t appid;
             std::string sha;
-            Steam::Utils::VDF::Object appinfo;
+            Steam::Utils::VDF::VDFNode appinfo;
         };
 
         struct ProductPackageInfo {
             uint32_t packageid;
             std::string sha;
-            Steam::Utils::VDF::Object appinfo;
+            Steam::Utils::VDF::VDFNode appinfo;
         };
 
         std::vector<ProductAppInfo> apps;

@@ -1,13 +1,14 @@
 # To Do
 
 - reduce per-command boilerplate by automatically adding the sessionid and steamid upon protomsg creation (helper?)
-- implement get_product_info
+- more events for errors (MsgParseFailureEvent, ConnectionFailureEvent, etc.)
 
 - optimize where possible (fixed-size arrays instead of vectors where possible, etc.)
 - implement UDPConnection and fix websocketconnection | Not planned ; another contributor can fix up the WebsocketConnection and create UDPConnection
 
 # Done
 
+- implement get_product_info ✅
 - CMClient is an un-concern seperated monolith of a file. ✅
 - handle protobuf msgs and multi msgs ✅
 - Start using namespaces to not pollute global ✅

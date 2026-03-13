@@ -31,11 +31,10 @@ int main() {
             logger->info("AppID: {} | SHA: {}", app.appid, app.sha);
 
             try {
-                const auto& common = app.appinfo.at("common").as_object();
-                const auto& name   = common.at("name").as_string();
-
-                std::string text = VDF::stringify(app.appinfo);
-                logger->info("\n{}", text);
+                if (auto common = app.appinfo.get("common")) {
+                    auto name = common->get_string_or("name", "Unknown");
+                    logger->info("Name: {}", name);
+                }
             }
             catch (...) {
                 logger->info("<not found>");
