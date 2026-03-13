@@ -6,6 +6,6 @@ build:
   commands:
     - curl -L https://www.doxygen.nl/files/doxygen-1.16.1.linux.bin.tar.gz | tar xz
     - mv doxygen-1.16.1/bin/doxygen ./doxygen
-    
+
     - git submodule update --init --recursive
-    - doxygen docs/Doxyfile
+    - ./doxygen docs/Doxyfile
