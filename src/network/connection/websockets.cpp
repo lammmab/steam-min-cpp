@@ -21,19 +21,18 @@ void WebsocketConnection::reader_loop() {
         buffer, 
         [this](boost::system::error_code ec, std::size_t bytes_transferred){
             if (ec) {
-                STEAMCLIENT_LOG_ERROR("WebsocketConnection: read failed: {}", ec.message());
+                STEAMCLIENT_LOG_ERROR("read failed: {}", ec.message());
                 return handle_disconnect(ec);
             }
             
-            STEAMCLIENT_LOG_INFO("WebsocketConnection: read {} bytes", bytes_transferred);
+            STEAMCLIENT_LOG_INFO("read {} bytes", bytes_transferred);
             if (on_frame_) {
-                STEAMCLIENT_LOG_INFO("WebsocketConnection: emitting on_frame callback");
+                STEAMCLIENT_LOG_INFO("emitting on_frame callback");
                 on_frame_(buffer_);
             } else {
-                STEAMCLIENT_LOG_WARN("WebsocketConnection: on_frame callback is null");
+                STEAMCLIENT_LOG_WARN("on_frame callback is null");
             }
 
-            STEAMCLIENT_LOG_INFO("WebsocketConnection: looping to next read");
             reader_loop();
     });
 }
@@ -42,7 +41,7 @@ void WebsocketConnection::network_connect() {
     if (state_ != ConnectionState::DISCONNECTED)
         return;
 
-    STEAMCLIENT_LOG_INFO("WebsocketConnection: starting network_connect()");
+    STEAMCLIENT_LOG_INFO("starting network_connect()");
     state_ = ConnectionState::CONNECTING;
 
     fetcher_.fetch_cm_servers();
@@ -51,7 +50,7 @@ void WebsocketConnection::network_connect() {
         throw std::runtime_error("No CM servers");
     }
 
-    STEAMCLIENT_LOG_INFO("WebsocketConnection: resolving server {}:{}", servers[0].first, servers[0].second);
+    STEAMCLIENT_LOG_INFO("resolving server {}:{}", servers[0].first, servers[0].second);
     asio::ip::tcp::resolver resolver(ctx_);
 
     auto const endpoints = resolver.resolve(servers[0].first,
@@ -67,8 +66,7 @@ void WebsocketConnection::network_connect() {
             });
         } else {
             state_ = ConnectionState::DISCONNECTED;
-            logger->error("WebsocketConnection: failed to connect: {}", ec.message());
-
+            STEAMCLIENT_LOG_ERROR("Failed to connect: {}", ec.message());
         }
     });
 }
@@ -82,11 +80,11 @@ void WebsocketConnection::network_close() {
 }
 
 void WebsocketConnection::async_send(const std::vector<uint8_t>& data) {
-    spdlog::info("WebsocketConnection: async_send Unimplemented");
+    STEAMCLIENT_LOG_ERROR("async_send Unimplemented");
 }
 
 void WebsocketConnection::handle_disconnect(const std::string& reason) {
-    spdlog::error("WebsocketConnection disconnected: {}", reason);
+    STEAMCLIENT_LOG_INFO("Connection disconnected: {}", reason);
     network_close();
 }
 

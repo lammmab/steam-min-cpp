@@ -2,7 +2,7 @@
 
 ## About
 
-Minimal Steam connections written in C++.
+A library for minimal Steam connections written in C++.
 This includes logic for:
 - Connecting to a Steam CM server
 - Logging in as an anonymous user
@@ -19,7 +19,11 @@ Please not that currently only TCP connections are supported.
 - protobuf
 - spdlog (OPTIONAL)
 
-## Example Usage:
+## Documentation
+
+Documentation can be found on the [read the docs page](https://steam-min-cpp.readthedocs.io/en/latest/index.html)
+
+## Example Usage
 
 ```cpp
 boost::asio::io_context io_ctx; // Create the Asio context for low-level TCP work
@@ -43,7 +47,6 @@ client.disconnect() // Close the connection.
 ```
 
 ## Building
-
 
 1. Clone the repo
 ```bash
