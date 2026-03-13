@@ -1,7 +1,7 @@
 #include "dispatch/dispatcher.hpp"
 
 #include "network/cmclient.hpp"
-#include "events/events.h"
+#include <steamclient/events.h>
 
 namespace Steam::Dispatch {
     void dispatch_proto(

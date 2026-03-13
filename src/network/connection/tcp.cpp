@@ -1,4 +1,4 @@
-#include "network/connection/tcp.hpp"
+#include <steamclient/connections/tcp.hpp>
 #include <boost/endian/conversion.hpp>
 #include "utils/macros.h"
 

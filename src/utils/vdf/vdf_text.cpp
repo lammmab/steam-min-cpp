@@ -1,4 +1,4 @@
-#include "vdf.hpp"
+#include <steamclient/vdf.hpp>
 #include <stdexcept>
 #include <cctype>
 

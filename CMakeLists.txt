@@ -1,35 +1,42 @@
 cmake_minimum_required(VERSION 3.0...3.5)
-project(SteamClient LANGUAGES CXX)
 
-find_package(Boost REQUIRED COMPONENTS system)
-find_package(CURL REQUIRED)
-
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_POLICY_VERSION_MINIMUM 3.1)
+
+project(SteamClient LANGUAGES CXX)
+
+include(CTest)
+
+set(BOOST_COMPONENTS system)
+
+if(BUILD_TESTING)
+    list(APPEND BOOST_COMPONENTS unit_test_framework)
+endif()
+
+find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
+
+find_package(CURL REQUIRED)
 
 include(FetchContent)
 include(cmake/get_cpm.cmake)
 
 # LOGGING
-FetchContent_Declare(
-    spdlog
-    GIT_REPOSITORY https://github.com/gabime/spdlog.git
-    GIT_TAG v1.12.0
-)
-FetchContent_MakeAvailable(spdlog)
+find_package(spdlog REQUIRED)
 
-file(GLOB_RECURSE SOURCES
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
 )
 
-add_executable(SteamClient ${SOURCES})
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
-target_include_directories(SteamClient PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-)
+add_library(SteamClient ${SOURCES})
+
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()
 
 set(protobuf_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 CPMAddPackage(
@@ -41,24 +48,55 @@ CPMAddPackage(
         "protobuf_USE_PACKAGE_ABSL ON"
 )
 
-CPMAddPackage(
-	NAME          	cryptopp-cmake
-	GIT_REPOSITORY	"https://github.com/abdes/cryptopp-cmake.git"
-	GIT_TAG       	"CRYPTOPP_8_9_0"
-	OPTIONS       	"CRYPTOPP_BUILD_TESTING OFF" "CRYPTOPP_INSTALL OFF"
+find_package(cryptopp REQUIRED)
+
+target_link_libraries(SteamClient
+    PUBLIC
+        Boost::system
+    PRIVATE
+        protobuf::libprotobuf
+        spdlog::spdlog_header_only
+        CURL::libcurl
+        cryptopp::cryptopp
 )
 
-target_link_libraries(SteamClient PRIVATE 
-    protobuf::libprotobuf
-    spdlog::spdlog_header_only
-    CURL::libcurl
-    cryptopp::cryptopp
-    Boost::system
+target_include_directories(SteamClient
+    PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
-
-target_include_directories(SteamClient PRIVATE ${protobuf_SOURCE_DIR}/src)
 
 if(WIN32)
     target_link_libraries(SteamClient PRIVATE ws2_32)
     target_compile_definitions(SteamClient PRIVATE _WIN32_WINNT=0x0601)
 endif()
+
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+    cmake/SteamClientConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/SteamClientConfig.cmake
+    INSTALL_DESTINATION lib/cmake/SteamClient
+)
+
+install(TARGETS SteamClient
+    EXPORT SteamClientTargets
+    ARCHIVE DESTINATION lib
+    LIBRARY DESTINATION lib
+    RUNTIME DESTINATION bin
+)
+
+install(DIRECTORY include/ DESTINATION include)
+
+install(EXPORT SteamClientTargets
+    FILE SteamClientTargets.cmake
+    NAMESPACE SteamClient::
+    DESTINATION lib/cmake/SteamClient
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/SteamClientConfig.cmake
+    DESTINATION lib/cmake/SteamClient
+)

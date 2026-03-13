@@ -3,7 +3,7 @@
 #include <array>
 #include <cstddef>
 #include <typeindex>
-#include "events/events.h"
+#include <steamclient/events.h>
 #include "base/clientmsg.hpp"
 
 namespace Steam::Messaging {

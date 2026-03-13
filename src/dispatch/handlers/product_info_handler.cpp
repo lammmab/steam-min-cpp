@@ -2,7 +2,7 @@
 #include "network/cmclient.hpp"
 
 #include "protogen/steammessages_clientserver_appinfo.pb.h"
-#include "utils/vdf/vdf.hpp"
+#include <steamclient/vdf.hpp>
 
 using namespace Steam;
 using namespace Messaging;

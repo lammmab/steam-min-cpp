@@ -1,6 +1,6 @@
 #pragma once
 
-#include "network/connection/connection.hpp"
+#include <steamclient/connections/connection.hpp>
 #include "events/event_emitter.h"
 
 #include "base/packetbase.hpp"

@@ -1,4 +1,4 @@
-#include "network/connection/websockets.hpp"
+#include <steamclient/connections/websockets.hpp>
 #include "utils/macros.h"
 
 FILE_LOGGER();
