@@ -21,7 +21,7 @@ Please not that currently only TCP connections are supported.
 
 ## Documentation
 
-Documentation can be found on the [read the docs page](https://steam-min-cpp.readthedocs.io/en/latest/index.html)
+Documentation can be found on the [read the docs page](https://steam-min-cpp.readthedocs.io/en/latest/)
 
 ## Example Usage
 
