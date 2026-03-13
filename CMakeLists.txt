@@ -1,57 +1,31 @@
-cmake_minimum_required(VERSION 3.0...3.5)
+cmake_minimum_required(VERSION 3.21)
+
+project(SteamClient LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-set(CMAKE_POLICY_VERSION_MINIMUM 3.1)
-
-project(SteamClient LANGUAGES CXX)
-
 include(CTest)
 
-set(BOOST_COMPONENTS system)
+option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
-if(BUILD_TESTING)
-    list(APPEND BOOST_COMPONENTS unit_test_framework)
-endif()
+## == MODULES == ##
+include(cmake/dependencies.cmake)
+include(cmake/protobuf.cmake)
 
-find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
-
-find_package(CURL REQUIRED)
-
-include(FetchContent)
-
+## == SOURCES == ##
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
 )
 
-option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+add_library(SteamClient 
+    ${SOURCES}
+    ${GENERATED_PROTO_SRCS}
+)
 
-add_library(SteamClient ${SOURCES})
-
-option(STEAMCLIENT_ENABLE_LOGGING "Enable spdlog logging" ON)
-
-if(STEAMCLIENT_ENABLE_LOGGING)
-    find_package(spdlog QUIET)
-    if(spdlog_FOUND)
-        target_link_libraries(SteamClient PRIVATE spdlog::spdlog)
-        target_compile_definitions(SteamClient PRIVATE STEAMCLIENT_USE_SPDLOG)
-    endif()
-endif()
-
-if(BUILD_TESTING)
-    add_subdirectory(test)
-endif()
-
-find_package(Protobuf REQUIRED)
-
-find_package(PkgConfig QUIET)
-if(PkgConfig_FOUND)
-    pkg_check_modules(CRYPTOPP libcrypto++)
-endif()
-
-find_library(CRYPTOPP_LIB cryptopp)
+## == OPTIONAL LOGGING == ##
+include(cmake/logging.cmake)
 
 target_link_libraries(SteamClient
     PUBLIC
@@ -62,19 +36,28 @@ target_link_libraries(SteamClient
         ${CRYPTOPP_LIB}
 )
 
+## == INCLUDES == ##
 target_include_directories(SteamClient
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
+        $<BUILD_INTERFACE:${PROTO_OUTPUT_DIR}>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
+## = WINDOWS NETWORKING == ##
 if(WIN32)
     target_link_libraries(SteamClient PRIVATE ws2_32)
     target_compile_definitions(SteamClient PRIVATE _WIN32_WINNT=0x0601)
 endif()
 
+## == TESTING == ##
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()
+
+## == PACKAGING == ##
 include(CMakePackageConfigHelpers)
 
 configure_package_config_file(

@@ -1,5 +1,11 @@
 # To Do
 
+- Create examples that can be optionally be built with CMake
+- Add a version into the cmake for widespread support
+- Add documentation (readthedocs.io???)
+- Implement more, in-depth unit tests for the public-facing API
+- Test on different OS (windows / linux)
+
 - reduce per-command boilerplate by automatically adding the sessionid and steamid upon protomsg creation (helper?)
 - more events for errors (MsgParseFailureEvent, ConnectionFailureEvent, etc.)
 

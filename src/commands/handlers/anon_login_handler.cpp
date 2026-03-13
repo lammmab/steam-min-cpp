@@ -1,5 +1,5 @@
 #include "commands/register.hpp"
-#include "protogen/steammessages_clientserver_login.pb.h"
+#include "steammessages_clientserver_login.pb.h"
 
 #include "network/cmclient.hpp"
 

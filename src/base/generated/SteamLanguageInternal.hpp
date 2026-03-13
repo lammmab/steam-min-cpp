@@ -10,7 +10,7 @@
 
 #include "utils/stream.hpp"
 #include "utils/steam_utils.hpp"
-#include "protogen/steammessages_base.pb.h"
+#include "steammessages_base.pb.h"
 
 namespace Steam::Internal
 {

@@ -2,7 +2,7 @@
 #include <boost/endian/conversion.hpp>
 #include "utils/macros.h"
 
-FILE_LOGGER();
+STEAMCLIENT_FILE_LOGGER();
 
 
 using namespace Steam::Networking;
@@ -54,7 +54,7 @@ void TCPConnection::network_connect()
         throw std::runtime_error("No CM servers");
     }
 
-    logger->info("resolving server {}:{}", servers[0].first, servers[0].second);
+    STEAMCLIENT_LOG_INFO("resolving server {}:{}", servers[0].first, servers[0].second);
     asio::ip::tcp::resolver resolver(ctx);
     auto endpoints = resolver.resolve(servers[0].first,
                                       std::to_string(servers[0].second));
@@ -66,7 +66,6 @@ void TCPConnection::network_connect()
                 start_read_header();
             } else {
                 state_ = ConnectionState::DISCONNECTED;
-                logger->error("failed to connect: {}", ec.message());
             }
         });
 }
@@ -150,7 +149,7 @@ void TCPConnection::do_write()
 }
 
 void TCPConnection::handle_disconnect(const std::string& reason) {
-    logger->info("Disconnected: {}", reason);
+    STEAMCLIENT_LOG_INFO("Disconnected: {}", reason);
     network_close();
 }
 

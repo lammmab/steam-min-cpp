@@ -1,7 +1,7 @@
 #include "dispatch/register.hpp"
 #include "network/cmclient.hpp"
 
-#include "protogen/steammessages_clientserver_login.pb.h"
+#include "steammessages_clientserver_login.pb.h"
 #include "base/clientmsg.hpp"
 
 #include "utils/gzip/gzip_helpers.hpp"
@@ -9,7 +9,7 @@
 
 #include "utils/macros.h"
 
-FILE_LOGGER();
+STEAMCLIENT_FILE_LOGGER();
 
 using namespace Steam;
 using namespace Steam::Messaging;

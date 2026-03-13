@@ -1,7 +1,7 @@
 #include "dispatch/register.hpp"
 #include "network/cmclient.hpp"
 
-#include "protogen/steammessages_clientserver_appinfo.pb.h"
+#include "steammessages_clientserver_appinfo.pb.h"
 #include <steamclient/vdf.hpp>
 
 using namespace Steam;

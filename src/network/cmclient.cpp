@@ -3,7 +3,7 @@
 
 #include <exception>
 
-FILE_LOGGER();
+STEAMCLIENT_FILE_LOGGER();
 
 using namespace Steam::Messaging;
 
@@ -16,7 +16,8 @@ void CMClient::start_session() {
 
         connection_->network_connect();
     } catch (const std::exception& e) {
-        logger->error("Could not connect via TCP: {}",e.what());
+        STEAMCLIENT_LOG_ERROR("Could not connect via TCP: {}",e.what());
+        throw;
     }
 }
 
@@ -54,7 +55,7 @@ void CMClient::consume_frame(const std::vector<uint8_t>& frame, bool encrypt) {
         }
 
     } catch (const std::exception& e) {
-        logger->error("Failed to parse frame (EMsg: {}): {}", emsg, e.what());
+        STEAMCLIENT_LOG_ERROR("Failed to parse frame (EMsg: {}): {}", emsg, e.what());
     }
 }
 
@@ -71,5 +72,5 @@ void CMClient::shutdown() {
     if (connection_ && connection_->is_connected())
         connection_->network_close();
     
-    logger->info("Closed connection and CMClient successfully");
+    STEAMCLIENT_LOG_INFO("Closed connection and CMClient successfully");
 }

@@ -1,7 +1,7 @@
 #include <steamclient/connections/websockets.hpp>
 #include "utils/macros.h"
 
-FILE_LOGGER();
+STEAMCLIENT_FILE_LOGGER();
 
 using namespace Steam::Networking;
 namespace asio = boost::asio;
@@ -21,19 +21,19 @@ void WebsocketConnection::reader_loop() {
         buffer, 
         [this](boost::system::error_code ec, std::size_t bytes_transferred){
             if (ec) {
-                logger->error("WebsocketConnection: read failed: {}", ec.message());
+                STEAMCLIENT_LOG_ERROR("WebsocketConnection: read failed: {}", ec.message());
                 return handle_disconnect(ec);
             }
             
-            logger->info("WebsocketConnection: read {} bytes", bytes_transferred);
+            STEAMCLIENT_LOG_INFO("WebsocketConnection: read {} bytes", bytes_transferred);
             if (on_frame_) {
-                logger->info("WebsocketConnection: emitting on_frame callback");
+                STEAMCLIENT_LOG_INFO("WebsocketConnection: emitting on_frame callback");
                 on_frame_(buffer_);
             } else {
-                logger->warn("WebsocketConnection: on_frame callback is null");
+                STEAMCLIENT_LOG_WARN("WebsocketConnection: on_frame callback is null");
             }
 
-            logger->info("WebsocketConnection: looping to next read");
+            STEAMCLIENT_LOG_INFO("WebsocketConnection: looping to next read");
             reader_loop();
     });
 }
@@ -42,17 +42,16 @@ void WebsocketConnection::network_connect() {
     if (state_ != ConnectionState::DISCONNECTED)
         return;
 
-    logger->info("WebsocketConnection: starting network_connect()");
+    STEAMCLIENT_LOG_INFO("WebsocketConnection: starting network_connect()");
     state_ = ConnectionState::CONNECTING;
 
     fetcher_.fetch_cm_servers();
     auto servers = fetcher_.get_servers();
     if (servers.empty()) {
-        logger->error("WebsocketConnection: no CM servers found");
         throw std::runtime_error("No CM servers");
     }
 
-    logger->info("WebsocketConnection: resolving server {}:{}", servers[0].first, servers[0].second);
+    STEAMCLIENT_LOG_INFO("WebsocketConnection: resolving server {}:{}", servers[0].first, servers[0].second);
     asio::ip::tcp::resolver resolver(ctx_);
 
     auto const endpoints = resolver.resolve(servers[0].first,
