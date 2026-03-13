@@ -20,10 +20,6 @@ find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 find_package(CURL REQUIRED)
 
 include(FetchContent)
-include(cmake/get_cpm.cmake)
-
-# LOGGING
-find_package(spdlog REQUIRED)
 
 file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
     ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
@@ -34,30 +30,36 @@ option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
 
 add_library(SteamClient ${SOURCES})
 
+option(STEAMCLIENT_ENABLE_LOGGING "Enable spdlog logging" ON)
+
+if(STEAMCLIENT_ENABLE_LOGGING)
+    find_package(spdlog QUIET)
+    if(spdlog_FOUND)
+        target_link_libraries(SteamClient PRIVATE spdlog::spdlog)
+        target_compile_definitions(SteamClient PRIVATE STEAMCLIENT_USE_SPDLOG)
+    endif()
+endif()
+
 if(BUILD_TESTING)
     add_subdirectory(test)
 endif()
 
-set(protobuf_BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
-CPMAddPackage(
-    NAME protobuf
-    GIT_REPOSITORY "https://github.com/protocolbuffers/protobuf.git"
-    GIT_TAG "v33.5"
-    OPTIONS
-        "protobuf_BUILD_TESTS OFF"
-        "protobuf_USE_PACKAGE_ABSL ON"
-)
+find_package(Protobuf REQUIRED)
 
-find_package(cryptopp REQUIRED)
+find_package(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+    pkg_check_modules(CRYPTOPP libcrypto++)
+endif()
+
+find_library(CRYPTOPP_LIB cryptopp)
 
 target_link_libraries(SteamClient
     PUBLIC
         Boost::system
     PRIVATE
         protobuf::libprotobuf
-        spdlog::spdlog_header_only
         CURL::libcurl
-        cryptopp::cryptopp
+        ${CRYPTOPP_LIB}
 )
 
 target_include_directories(SteamClient

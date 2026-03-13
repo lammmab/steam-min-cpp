@@ -15,6 +15,9 @@ Please not that currently only TCP connections are supported.
 
 - libcurl
 - boost
+- crypto++
+- protobuf
+- spdlog (OPTIONAL)
 
 ## Example Usage:
 
