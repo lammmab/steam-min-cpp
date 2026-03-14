@@ -26,4 +26,14 @@ namespace Steam {
     {
         return network_->is_connected();
     }
+
+    template<typename Request>
+    void SteamClient::execute(const Request& req) {
+        network_->execute(req);
+    } 
+
+    template<typename Type, typename Fn>
+    void SteamClient::on(Fn&& callback) {
+        network_->template on<Type>(std::forward<Fn>(callback));
+    }
 }
