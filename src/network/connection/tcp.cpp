@@ -1,4 +1,6 @@
 #include <steamclient/connections/tcp.hpp>
+#include "web/cmfetcher.hpp"
+
 #include <boost/endian/conversion.hpp>
 #include "utils/macros.h"
 
@@ -24,7 +26,10 @@ bool validate_magic(const std::array<uint8_t, 8>& buffer,const std::array<uint8_
 }
 
 TCPConnection::TCPConnection(asio::io_context& ctx)
-    : socket_(ctx), ctx(ctx) {}
+    : socket_(ctx),
+      ctx(ctx),
+      fetcher_(std::make_unique<Web::CMFetcher>())
+{}
 
 TCPConnection::~TCPConnection() {
     if (is_connected()) network_close();
@@ -48,8 +53,8 @@ void TCPConnection::network_connect()
 
     state_ = ConnectionState::CONNECTING;
 
-    fetcher_.fetch_cm_servers();
-    auto servers = fetcher_.get_servers();
+    fetcher_->fetch_cm_servers();
+    auto servers = fetcher_->get_servers();
     if (servers.empty()) {
         throw std::runtime_error("No CM servers");
     }
@@ -110,16 +115,20 @@ void TCPConnection::start_read_body(uint32_t len)
 
 void TCPConnection::async_send(const std::vector<uint8_t>& data)
 {
-    uint32_t data_len = static_cast<uint32_t>(data.size());
     std::vector<uint8_t> buffer;
 
     buffer.reserve(sizeof(uint32_t) + MAGIC.size() + data.size());
+    uint32_t data_len = boost::endian::native_to_little(
+        static_cast<uint32_t>(data.size())
+    );
 
     // https://github.com/SteamRE/SteamKit/blob/master/SteamKit2/SteamKit2/Networking/Steam3/TcpConnection.cs#L327
     // 1. Append the data length
-    buffer.insert(buffer.end(),
-                  reinterpret_cast<uint8_t*>(&data_len),
-                  reinterpret_cast<uint8_t*>(&data_len) + sizeof(uint32_t));
+    buffer.insert(
+        buffer.end(),
+        reinterpret_cast<uint8_t*>(&data_len),
+        reinterpret_cast<uint8_t*>(&data_len) + sizeof(uint32_t)
+    );
 
     // 2. Append the MAGIC constant (VT01)
     buffer.insert(buffer.end(), MAGIC.begin(), MAGIC.end());

@@ -9,11 +9,14 @@
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
-#include "web/cmfetcher.hpp"
 #include "connection.hpp"
 
 #include <boost/asio.hpp>
 #include <boost/system/error_code.hpp>
+
+namespace Steam::Networking::Web {
+    class CMFetcher;
+}
 
 namespace Steam::Networking {
     class TCPConnection: public IConnection {
@@ -42,7 +45,8 @@ namespace Steam::Networking {
         void handle_disconnect(const std::string& reason);
         void handle_disconnect(const std::error_code& reason);
 
-        Steam::Networking::Web::CMFetcher fetcher_;
+        std::unique_ptr<Web::CMFetcher> fetcher_;
+
         
         std::array<uint8_t, 8> header_buffer_;
         std::vector<uint8_t> body_buffer_;

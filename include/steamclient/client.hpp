@@ -32,14 +32,11 @@ namespace Steam {
 
         /// Construct a Steam client using a specific connection implementation.
         /// @param connection Connection backend used for communicating with Steam CM servers.
-        SteamClient(std::unique_ptr<Steam::Networking::IConnection> connection)
-            : network_(std::move(connection)) {}
+        SteamClient(std::unique_ptr<Steam::Networking::IConnection> connection);
 
         /// Destructor
         /// Ensures the client disconnects from CM servers before destruction.
-        ~SteamClient() {
-            disconnect();
-        }
+        ~SteamClient();
 
         /// @}
 
@@ -48,20 +45,14 @@ namespace Steam {
         /// @{
 
         /// Establish a session with a Steam CM server.
-        inline void connect() {
-            network_.start_session();
-        };
+        void connect();
 
         /// Disconnect from the current Steam CM server session.
-        inline void disconnect() {
-            network_.shutdown();
-        };
+        void disconnect();
 
         /// Check whether the client is currently connected.
         /// @return True if a CM session is currently active.
-        inline bool is_connected() const {
-            return network_.is_connected();
-        };
+        bool is_connected() const;
 
         /// @}
         
@@ -83,7 +74,7 @@ namespace Steam {
         template<typename Type, typename Fn>
         inline void on(Fn&& callback)
         {
-            network_.on<Type>(std::forward<Fn>(callback));
+            network_->template on<Type>(std::forward<Fn>(callback));
         }
 
         /// @}
@@ -102,13 +93,13 @@ namespace Steam {
         /// @param req Request structure to send to the server.
         template<typename Request>
         inline void execute(const Request& req) {
-            network_.execute(req);
+            network_->execute(req);
         }
 
         /// @}
 
     private:
-        Steam::Messaging::CMClient network_;
+        std::unique_ptr<Steam::Messaging::CMClient> network_;
         
     };
 }
