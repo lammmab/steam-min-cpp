@@ -2,13 +2,18 @@
 /// @brief Steamworks minimal C++ wrapper
 
 #pragma once
-#include "network/cmclient.hpp"
 
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <cstdint>
 #include <memory>
+
+#include <steamclient/connections/connection.hpp>
+
+namespace Steam::Messaging {
+    class CMClient;
+}
 
 /// @defgroup steam_client Steam Client
 /// High-level interface used to communicate with Steam CM servers.
