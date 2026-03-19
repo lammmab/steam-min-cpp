@@ -77,7 +77,9 @@ namespace Steam {
         /// @param callback Callable invoked when the specified event occurs.
         ///                 The callable should accept the emitted event object.
         template<typename Type, typename Fn>
-        void on(Fn&& callback);
+        void on(Fn&& callback) {
+            network_->template on<Type>(std::forward<Fn>(callback));
+        }
 
         /// @}
 
@@ -94,7 +96,9 @@ namespace Steam {
         /// @tparam Request Type representing the CM request message.
         /// @param req Request structure to send to the server.
         template<typename Request>
-        void execute(const Request& req);
+        void execute(const Request& req) {
+            network_->execute(req);
+        } 
 
         /// @}
 
