@@ -71,10 +71,12 @@ static void handle_prod_info_response(
     for (const auto& pkg : msg.Body.packages())
         packages.push_back(parse_pkg(pkg));
 
-    client.emit(Events::ProductInfoResult{
+    Events::ProductInfoResult evt{
         std::move(apps),
         std::move(packages)
-    });
+    };
+
+    client.emit_event(evt);
 }
 
 static Steam::Dispatch::ProtoRegister<

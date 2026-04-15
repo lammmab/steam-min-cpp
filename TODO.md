@@ -8,7 +8,6 @@
 - more events for errors (MsgParseFailureEvent, ConnectionFailureEvent, etc.)
 
 - optimize where possible (fixed-size arrays instead of vectors where possible, etc.)
-- implement UDPConnection and fix websocketconnection | Not planned ; another contributor can fix up the WebsocketConnection and create UDPConnection
 
 # Done
 
@@ -28,3 +27,7 @@
 - reconnect logic
 - heartbeat / keepalive handling
 - CMFetcher retries / seperate CM server picking and raw connection layer
+
+# Not Planned
+
+- implement UDPConnection and fix websocketconnection | Not planned ; another contributor can fix up the WebsocketConnection and create UDPConnection

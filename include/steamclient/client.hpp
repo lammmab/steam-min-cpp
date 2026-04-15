@@ -8,6 +8,7 @@
 #include <unordered_map>
 #include <cstdint>
 #include <memory>
+#include <typeindex>
 
 #include <steamclient/connections/connection.hpp>
 
@@ -77,8 +78,14 @@ namespace Steam {
         /// @param callback Callable invoked when the specified event occurs.
         ///                 The callable should accept the emitted event object.
         template<typename Type, typename Fn>
-        void on(Fn&& callback);
-
+        void on(Fn&& callback) {
+            on_impl(
+                std::type_index(typeid(Type)),
+                [cb = std::forward<Fn>(callback)](const void* event) {
+                    cb(*static_cast<const Type*>(event));
+                }
+            );
+        }
         /// @}
 
         /// @name Command Execution
@@ -94,14 +101,17 @@ namespace Steam {
         /// @tparam Request Type representing the CM request message.
         /// @param req Request structure to send to the server.
         template<typename Request>
-        void execute(const Request& req);
+        void execute(const Request& req) {
+            execute_impl(std::type_index(typeid(Request)), &req);
+        }
 
         /// @}
 
     private:
+        void on_impl(std::type_index type, std::function<void(const void*)> handler);
+        void execute_impl(std::type_index type, const void* req);
+
         std::unique_ptr<Steam::Messaging::CMClient> network_;
     };
 }
 /// @}
-
-#include "client.inl"

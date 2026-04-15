@@ -7,6 +7,7 @@ endif()
 find_package(Boost REQUIRED COMPONENTS ${BOOST_COMPONENTS})
 find_package(CURL REQUIRED)
 find_package(Protobuf REQUIRED)
+find_package(absl REQUIRED)
 
 find_package(PkgConfig QUIET)
 if(PkgConfig_FOUND)

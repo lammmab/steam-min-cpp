@@ -17,13 +17,15 @@ static void handle_logon_response(
     
     bool success = result == Internal::Enums::EResult::OK;
 
-    client.emit(Steam::Events::ClientLogonEvent{
+    Steam::Events::ClientLogonEvent evt{
         success
             ? Steam::Events::EventResult::ok()
             : Steam::Events::EventResult::fail("Client login failed; incorrect information?"),
         msg.Body.client_supplied_steamid(),
         msg.Header.proto.client_sessionid()
-    });
+    };
+
+    client.emit_event(evt);
 }
 
 static Steam::Dispatch::ProtoRegister<

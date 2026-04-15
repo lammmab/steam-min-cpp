@@ -30,11 +30,13 @@ static void handle_encrypt_result(
     bool success = res.Body.result == Enums::EResult::OK;
     client.set_channel_secured(success);
 
-    client.emit(Events::ChannelSecuredEvent{
+    Events::ChannelSecuredEvent evt{
         success
             ? Events::EventResult::ok()
             : Events::EventResult::fail("Failed to encrypt channel; bad server?")
-    });
+    };
+
+    client.emit_event(evt);
 }
 
 static Steam::Dispatch::MsgRegister<

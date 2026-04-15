@@ -14,6 +14,7 @@
 #include <memory>
 #include <cstdint>
 #include <vector>
+#include <typeindex>
 
 namespace Steam::Messaging {
     class JobIDs {
@@ -29,6 +30,8 @@ namespace Steam::Messaging {
     };
 
     class CMClient: public medooze::EventEmitter {
+    private:
+        std::map<std::type_index, std::function<void(const void*)>> erased_listeners_;
     public:
         CMClient(std::unique_ptr<Steam::Networking::IConnection> connection)
             : connection_(std::move(connection))
@@ -67,6 +70,12 @@ namespace Steam::Messaging {
             if (fn)
                 fn(*this, &req);
         }
+
+        void on_erased(std::type_index type, std::function<void(const void*)> handler);
+        void emit_erased(std::type_index type, const void* req);
+
+        template<typename Type>
+        void emit_event(const Type& evt); 
 
         // This solution is super hacky; we will 100% want to correct this later and fix the base classes.
         template<typename THdr>

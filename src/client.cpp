@@ -26,4 +26,15 @@ namespace Steam {
     {
         return network_->is_connected();
     }
+
+    void SteamClient::on_impl(
+        std::type_index type,
+        std::function<void(const void*)> handler)
+    {
+        network_->on_erased(type, std::move(handler));
+    }
+
+    void SteamClient::execute_impl(std::type_index type, const void* req) {
+        network_->emit_erased(type, req);
+    }
 }

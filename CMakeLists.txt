@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(CTest)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
+option(BUILD_EXAMPLES "Build SteamClient examples" ON)
 
 ## == MODULES == ##
 include(cmake/dependencies.cmake)
@@ -32,6 +33,8 @@ target_link_libraries(SteamClient
         Boost::system
     PRIVATE
         protobuf::libprotobuf
+        absl::check
+        absl::log
         CURL::libcurl
         ${CRYPTOPP_LIB}
 )
@@ -55,6 +58,11 @@ endif()
 ## == TESTING == ##
 if(BUILD_TESTING)
     add_subdirectory(test)
+endif()
+
+## == EXAMPLES == ##
+if(BUILD_EXAMPLES) 
+    add_subdirectory(examples)
 endif()
 
 ## == PACKAGING == ##

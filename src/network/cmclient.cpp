@@ -74,3 +74,19 @@ void CMClient::shutdown() {
     
     STEAMCLIENT_LOG_INFO("Closed connection and CMClient successfully");
 }
+
+void CMClient::on_erased(std::type_index type, std::function<void(const void*)> handler) {
+    erased_listeners_[type] = std::move(handler);
+}
+
+void CMClient::emit_erased(std::type_index type, const void* evt) {
+    auto it = erased_listeners_.find(type);
+    if (it != erased_listeners_.end())
+        it->second(evt);
+}
+
+template<typename Type>
+void CMClient::emit_event(const Type& evt) {
+    emit(evt);
+    emit_erased(std::type_index(typeid(evt)), &evt);
+}
