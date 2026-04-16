@@ -10,9 +10,10 @@ namespace Events = Steam::Events;
 
 static void exec_anon_logon(CMClient& client, const AnonymousLogin& req) {
     if (!client.is_channel_secured()) {
-        client.emit(Events::ClientLogonEvent{
+        client.emit_event(Events::ClientLogonEvent{
             Events::EventResult::fail("Channel not secured")
         });
+        return;
     } 
 
     ClientMessages::MsgProto<CMsgClientLogon> msg(Enums::EMsg::ClientLogon);

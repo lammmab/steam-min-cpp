@@ -1,3 +1,6 @@
+/// @file macros.h
+/// File logging macros for use within SteamClient
+
 #pragma once
 
 #if defined(STEAMCLIENT_USE_SPDLOG)

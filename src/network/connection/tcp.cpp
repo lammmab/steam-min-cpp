@@ -2,7 +2,7 @@
 #include "web/cmfetcher.hpp"
 
 #include <boost/endian/conversion.hpp>
-#include "utils/macros.h"
+#include <steamclient/macros.h>
 
 STEAMCLIENT_FILE_LOGGER();
 

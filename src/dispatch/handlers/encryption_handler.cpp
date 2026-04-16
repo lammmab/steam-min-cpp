@@ -15,7 +15,7 @@ static void handle_encrypt_request(
             client.crypto().generate_encryption_response(packet);
         client.send_msg(response);
     } catch (const std::exception& e) {
-        client.emit(Events::ChannelSecuredEvent{
+        client.emit_event(Events::ChannelSecuredEvent{
             Events::EventResult::fail(e.what())
         });
     }

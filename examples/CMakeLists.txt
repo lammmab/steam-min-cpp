@@ -7,6 +7,8 @@ foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
 
     target_link_libraries(${EXAMPLE_NAME}
         PRIVATE
+            -Wl,--whole-archive
             SteamClient
+            -Wl,--no-whole-archive
     )
 endforeach()

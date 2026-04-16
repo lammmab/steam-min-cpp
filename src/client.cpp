@@ -35,6 +35,6 @@ namespace Steam {
     }
 
     void SteamClient::execute_impl(std::type_index type, const void* req) {
-        network_->emit_erased(type, req);
+        network_->execute(req);
     }
 }

@@ -1,5 +1,3 @@
-option(STEAMCLIENT_ENABLE_LOGGING "Enable spdlog logging" ON)
-
 if(STEAMCLIENT_ENABLE_LOGGING)
     find_package(spdlog QUIET)
 

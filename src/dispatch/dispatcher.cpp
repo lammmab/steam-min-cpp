@@ -19,7 +19,7 @@ namespace Steam::Dispatch {
             if (fn) {
                 fn(client, packet);
             } else {
-                client.emit(Steam::Events::MsgNotImplementedEvent{id, &packet});
+                client.emit_event(Steam::Events::MsgNotImplementedEvent{id, &packet});
             }
         }
     }
@@ -37,7 +37,7 @@ namespace Steam::Dispatch {
             if (fn) {
                 fn(client, packet);
             } else {
-                client.emit(Steam::Events::MsgNotImplementedEvent{id, &packet});
+                client.emit_event(Steam::Events::MsgNotImplementedEvent{id, &packet});
             }
         }
     }

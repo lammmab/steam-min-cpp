@@ -75,7 +75,10 @@ namespace Steam::Messaging {
         void emit_erased(std::type_index type, const void* req);
 
         template<typename Type>
-        void emit_event(const Type& evt); 
+        void emit_event(const Type& evt) {
+            emit(evt);
+            emit_erased(std::type_index(typeid(evt)), &evt);
+        }
 
         // This solution is super hacky; we will 100% want to correct this later and fix the base classes.
         template<typename THdr>

@@ -1,5 +1,5 @@
 #include "network/cmclient.hpp"
-#include "utils/macros.h"
+#include <steamclient/macros.h>
 
 #include <exception>
 
@@ -83,10 +83,4 @@ void CMClient::emit_erased(std::type_index type, const void* evt) {
     auto it = erased_listeners_.find(type);
     if (it != erased_listeners_.end())
         it->second(evt);
-}
-
-template<typename Type>
-void CMClient::emit_event(const Type& evt) {
-    emit(evt);
-    emit_erased(std::type_index(typeid(evt)), &evt);
 }

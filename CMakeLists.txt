@@ -8,7 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(CTest)
 
 option(BUILD_SHARED_LIBS "Build shared libraries" OFF)
-option(BUILD_EXAMPLES "Build SteamClient examples" ON)
+option(BUILD_EXAMPLES "Build SteamClient examples" OFF)
+option(STEAMCLIENT_ENABLE_LOGGING "Enable spdlog logging" OFF)
 
 ## == MODULES == ##
 include(cmake/dependencies.cmake)
