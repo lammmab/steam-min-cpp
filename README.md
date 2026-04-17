@@ -34,6 +34,7 @@ cd steam-min-cpp
 3. Configure the project 
 ```bash
 cmake -B build -G Ninja
+```
 
 > [!TIP]
 > In this example, Ninja Generator is used.
