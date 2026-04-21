@@ -1,4 +1,5 @@
 /// @internal
+/// \cond INTERNAL
 /*****************************************************************************
 **
 **  ctl::json version 2.115
@@ -3113,3 +3114,4 @@ typedef json_internal_::jsonnode<char8_t, json_internal_::utf8tag> u8json;
 
 }  //  namespace NAMESPACE_CTLJSON
 #endif  //  CTL_JSON_TEMPLATE_LIBRARY
+/// \endcond

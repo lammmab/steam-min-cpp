@@ -1,4 +1,5 @@
 /// @internal
+/// \cond
 #pragma once
 
 #include <steamclient/routing/events/table.hpp>
@@ -17,3 +18,4 @@ void dispatch_proto(
 void dispatch_msg(Steam::Messaging::CMClient& client,
                   const Steam::Messaging::Packets::PacketMsg& packet);
 }  // namespace Steam::Dispatch
+/// \endcond

@@ -1,4 +1,5 @@
 /// @internal
+/// \cond INTERNAL
 #pragma once
 #include <cryptopp/aes.h>
 #include <cryptopp/crc.h>
@@ -64,3 +65,4 @@ inline size_t const calculate_max_encrypted_length(size_t plaintext_len) {
 }
 
 }  // namespace Steam::Crypto::Helpers
+/// \endcond

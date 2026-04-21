@@ -1,4 +1,5 @@
 /// @internal
+/// \cond
 #pragma once
 
 #include <steamclient/routing/commands/router.hpp>
@@ -16,3 +17,4 @@ struct RequestRegister {
   }
 };
 }  // namespace Steam::Dispatch
+/// \endcond

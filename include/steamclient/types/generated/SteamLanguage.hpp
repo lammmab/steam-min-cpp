@@ -1,4 +1,5 @@
 // This file was automatically generated; Do not modify.
+/// \cond
 #pragma once
 #include <cstdint>
 #include <cstddef>
@@ -3498,3 +3499,4 @@ namespace Steam::Internal::Enums
 		Max = 8,
 	};
 } // namespace Steam::Internal::Enums
+/// \endcond

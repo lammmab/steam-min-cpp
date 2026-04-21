@@ -1,4 +1,5 @@
 /// @internal
+/// \cond
 #pragma once
 
 #include <steamclient/routing/events/table.hpp>
@@ -17,3 +18,4 @@ struct MsgRegister {
 };
 
 }  // namespace Steam::Dispatch
+/// \endcond

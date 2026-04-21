@@ -1,4 +1,5 @@
 /// @internal
+/// \cond
 /*
 MIT License
 
@@ -87,3 +88,4 @@ class EventEmitter {
 };  // namespace medooze
 
 #endif /* MEDOOZE_EVENTEMITTER_H */
+/// \endcond

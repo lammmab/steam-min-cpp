@@ -1,5 +1,7 @@
 /// @internal
+/// \cond
 // GPT
+
 #pragma once
 #include <steamclient/utilities/err.h>
 
@@ -125,3 +127,4 @@ class Stream {
   size_t position;
 };
 }  // namespace Steam::Utils
+/// \endcond

@@ -1,4 +1,5 @@
 /// @internal
+/// \cond
 #pragma once
 
 #include <array>
@@ -32,3 +33,4 @@ size_t request_id() {
   return id;
 }
 }  // namespace Steam::Dispatch
+/// \endcond

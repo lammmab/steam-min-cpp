@@ -1,6 +1,7 @@
 // This file was majorly automatically generated.
 // Some changes were made because I was too lazy to make the C++ generator
 // extremely robust. Avoid modifying unless strictly necessary.
+/// \cond
 #pragma once
 #include <cstddef>
 #include <cstdint>
@@ -1938,3 +1939,4 @@ struct MsgClientGetLegacyGameKeyResponse : public ISteamSerializableMessage {
 };
 
 }  // namespace Steam::Internal
+/// \endcond

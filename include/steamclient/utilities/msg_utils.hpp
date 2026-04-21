@@ -1,5 +1,7 @@
 /// @internal
+/// \cond
 // GPT
+
 #pragma once
 #include <cstddef>
 #include <cstdint>
@@ -30,3 +32,4 @@ inline static bool is_protobuf_msg(uint32_t emsg) {
   return (emsg & PROTO_MASK) > 0;
 }
 }  // namespace Steam::Utils::MsgUtil
+/// \endcond

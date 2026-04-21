@@ -1,4 +1,5 @@
 /// @internal
+/// \cond INTERNAL
 #include <steamclient/utilities/err.h>
 
 #include <cstdint>
@@ -63,3 +64,4 @@ class EncryptionManager {
       hmac_secret_;  // hmac secret (first 16 bytes of the session_key_)
 };
 }  // namespace Steam::Crypto
+/// \endcond

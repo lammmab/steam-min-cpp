@@ -1,4 +1,5 @@
 /// @internal
+/// \cond
 #pragma once
 
 #include <array>
@@ -36,3 +37,4 @@ struct DispatchTable {
 
 inline DispatchTable g_dispatch;
 }  // namespace Steam::Dispatch
+/// \endcond

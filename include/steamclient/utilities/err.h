@@ -1,4 +1,5 @@
 /// @internal
+/// \cond
 // GPT
 
 #pragma once
@@ -67,3 +68,4 @@ inline std::string format_string(const char* fmt, ...) {
 /* Range check helper */
 #define RUNTIME_ASSERT_RANGE(val, min, max) \
   RUNTIME_ASSERT(((val) >= (min) && (val) <= (max)), "value out of range")
+/// \endcond
