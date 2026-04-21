@@ -8,6 +8,8 @@
 #include <steamclient/network/cmclient.hpp>
 #include <typeindex>
 
+namespace Steam {
+
 /// @defgroup steam_client Steam Client
 /// High-level interface used to communicate with Steam CM servers.
 ///
@@ -20,7 +22,6 @@
 /// 3. Connect to a CM server.
 /// 4. Send commands and process events.
 /// @{
-namespace Steam {
 class SteamClient {
  public:
   /// @name Construction and Destruction
@@ -97,5 +98,6 @@ class SteamClient {
  private:
   std::unique_ptr<Steam::Messaging::CMClient> network_;
 };
-}  // namespace Steam
 /// @}
+
+}  // namespace Steam

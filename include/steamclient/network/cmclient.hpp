@@ -1,4 +1,6 @@
 /// @internal
+/// \cond
+
 #pragma once
 
 #include <steamclient/external/event_emitter.h>
@@ -82,3 +84,4 @@ class CMClient : public medooze::EventEmitter {
   Steam::Crypto::EncryptionManager crypto_;
 };
 }  // namespace Steam::Messaging
+/// \endcond
