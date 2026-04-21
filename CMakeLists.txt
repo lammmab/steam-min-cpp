@@ -48,6 +48,7 @@ target_include_directories(SteamClient
         $<BUILD_INTERFACE:${PROTO_OUTPUT_DIR}>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_SOURCE_DIR}
 )
 
 ## = WINDOWS NETWORKING == ##
