@@ -9,7 +9,7 @@ This includes logic for:
 - Getting product details given a product ID
 
 It is built to support future contributions extending the client to support other Steam server features.
-Please not that currently only TCP connections are supported.
+Please note that currently only TCP connections are supported.
 
 ## Requirements
 
@@ -18,6 +18,18 @@ Please not that currently only TCP connections are supported.
 - crypto++
 - protobuf
 - spdlog (OPTIONAL)
+
+## Documentation
+
+Documentation can be found on the [read the docs page](https://steam-min-cpp.readthedocs.io/en/latest/)
+
+## Examples
+
+Examples can be found in the [examples folder](examples/)
+
+## Contributing
+
+The contribution guide can be found in the [CONTRIBUTING.md file](CONTRIBUTING.md)
 
 ## Building
 
@@ -43,11 +55,3 @@ cmake -B build -G Ninja
 ```bash
 cmake --build build 
 ```
-
-## Documentation
-
-Documentation can be found on the [read the docs page](https://steam-min-cpp.readthedocs.io/en/latest/)
-
-## Examples
-
-Examples can be found in [the examples folder](https://github.com/lammmab/steam-min-cpp/tree/main/examples)

@@ -5,7 +5,6 @@
 
 #include "web/cmfetcher.hpp"
 
-
 STEAMCLIENT_FILE_LOGGER();
 
 using namespace Steam::Networking;

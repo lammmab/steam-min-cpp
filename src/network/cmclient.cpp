@@ -3,7 +3,6 @@
 #include <exception>
 #include <steamclient/network/cmclient.hpp>
 
-
 STEAMCLIENT_FILE_LOGGER();
 
 using namespace Steam::Messaging;

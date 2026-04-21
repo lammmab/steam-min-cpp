@@ -1,7 +1,6 @@
 # To Do
 
 - Improve / expand documentation now that more public headers are in the include/
-- Add a version into the cmake for widespread support
 - Implement more, in-depth unit tests for the public-facing API
 
 - reduce per-command boilerplate by automatically adding the sessionid and steamid upon protomsg creation (helper?)
@@ -11,6 +10,7 @@
 
 # Done
 
+- Add a version into the cmake for widespread support ✅
 - implement get_product_info ✅
 - CMClient is an un-concern seperated monolith of a file. ✅
 - handle protobuf msgs and multi msgs ✅
@@ -19,7 +19,7 @@
 - implement anonymous_login ✅
 - is_protobuf_msg is wrong past inital encryption phase ✅
 - create IConnection and allow users to specify TCP vs UDP vs websockets ✅
-- Create examples that can be optionally be built with CMake
+- Create examples that can be optionally be built with CMake ✅
 
 # Nice for the future
 

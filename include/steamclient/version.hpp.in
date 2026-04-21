@@ -1,0 +1,13 @@
+/// @internal
+/// \cond
+// This file is used to automatically control the version directly from CMake
+
+#pragma once
+
+#define STEAMCLIENT_VERSION_MAJOR @PROJECT_VERSION_MAJOR@
+#define STEAMCLIENT_VERSION_MINOR @PROJECT_VERSION_MINOR@
+#define STEAMCLIENT_VERSION_PATCH @PROJECT_VERSION_PATCH@
+
+#define STEAMCLIENT_VERSION_STRING "@PROJECT_VERSION@"
+
+/// \endcond

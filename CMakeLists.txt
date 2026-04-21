@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(SteamClient LANGUAGES CXX)
+project(SteamClient VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -32,12 +32,12 @@ include(cmake/logging.cmake)
 target_link_libraries(SteamClient
     PUBLIC
         Boost::system
-    PRIVATE
         protobuf::libprotobuf
+        ${CRYPTOPP_LIB}
+    PRIVATE
         absl::check
         absl::log
         CURL::libcurl
-        ${CRYPTOPP_LIB}
 )
 
 ## == INCLUDES == ##
@@ -48,7 +48,6 @@ target_include_directories(SteamClient
         $<BUILD_INTERFACE:${PROTO_OUTPUT_DIR}>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
-        ${CMAKE_SOURCE_DIR}
 )
 
 ## = WINDOWS NETWORKING == ##
@@ -66,6 +65,38 @@ endif()
 if(BUILD_EXAMPLES) 
     add_subdirectory(examples)
 endif()
+
+## == VERSIONING == ##
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/steamclient/version.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/steamclient/version.hpp
+)
+
+target_include_directories(SteamClient PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/generated>
+    $<INSTALL_INTERFACE:include>
+)
+
+set_target_properties(SteamClient PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+)
+
+write_basic_package_version_file(
+    ${CMAKE_CURRENT_BINARY_DIR}/SteamClientConfigVersion.cmake
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/SteamClientConfigVersion.cmake
+    DESTINATION lib/cmake/SteamClient
+)
+
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/steamclient/version.hpp
+    DESTINATION include/steamclient
+)
 
 ## == PACKAGING == ##
 include(CMakePackageConfigHelpers)
@@ -95,3 +126,5 @@ install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/SteamClientConfig.cmake
     DESTINATION lib/cmake/SteamClient
 )
+
+add_library(SteamClient::SteamClient ALIAS SteamClient)
