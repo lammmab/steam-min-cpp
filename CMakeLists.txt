@@ -66,7 +66,11 @@ if(BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
-## == VERSIONING == ##
+## == PACKAGING / Versioning == ##
+include(CMakePackageConfigHelpers)
+
+# VERSIONING
+
 configure_file(
     ${CMAKE_CURRENT_SOURCE_DIR}/include/steamclient/version.hpp.in
     ${CMAKE_CURRENT_BINARY_DIR}/generated/steamclient/version.hpp
@@ -98,8 +102,7 @@ install(FILES
     DESTINATION include/steamclient
 )
 
-## == PACKAGING == ##
-include(CMakePackageConfigHelpers)
+# PACKAGING
 
 configure_package_config_file(
     cmake/SteamClientConfig.cmake.in
