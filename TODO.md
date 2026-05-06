@@ -7,6 +7,7 @@
 - more events for errors (MsgParseFailureEvent, ConnectionFailureEvent, etc.)
 
 - optimize where possible (fixed-size arrays instead of vectors where possible, etc.)
+- Async depot downloading prioritizing speed
 
 # Done
 
@@ -20,13 +21,13 @@
 - is_protobuf_msg is wrong past inital encryption phase ✅
 - create IConnection and allow users to specify TCP vs UDP vs websockets ✅
 - Create examples that can be optionally be built with CMake ✅
+- heartbeat / keepalive handling
 
 # Nice for the future
 
 - automatic protobuf <-> message registry
 - packet tracing/debug logging
 - reconnect logic
-- heartbeat / keepalive handling
 - CMFetcher retries / seperate CM server picking and raw connection layer
 
 # Not Planned

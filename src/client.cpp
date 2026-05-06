@@ -1,8 +1,9 @@
 #include <steamclient/client.hpp>
 
 namespace Steam {
-SteamClient::SteamClient(std::unique_ptr<Networking::IConnection> connection) {
-  network_ = std::make_unique<Messaging::CMClient>(std::move(connection));
+SteamClient::SteamClient(std::unique_ptr<Networking::IConnection> connection,
+                         boost::asio::io_context& ctx) {
+  network_ = std::make_unique<Messaging::CMClient>(std::move(connection), ctx);
 }
 
 SteamClient::~SteamClient() { disconnect(); }

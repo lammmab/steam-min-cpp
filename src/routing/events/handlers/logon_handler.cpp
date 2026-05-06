@@ -15,6 +15,8 @@ static void handle_logon_response(
 
   bool success = result == Internal::Enums::EResult::OK;
 
+  if (success) client.kickoff_heartbeat(msg.Body.heartbeat_seconds());
+
   Steam::Events::ClientLogonEvent evt{
       success ? Steam::Events::EventResult::ok()
               : Steam::Events::EventResult::fail(

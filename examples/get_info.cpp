@@ -1,3 +1,5 @@
+#include <steamclient/macros.h>
+
 #include <boost/asio.hpp>
 #include <cstdio>
 #include <iostream>
@@ -7,6 +9,8 @@
 #include <steamclient/utilities/vdf.hpp>
 #include <thread>
 
+STEAMCLIENT_FILE_LOGGER();
+
 namespace Events = Steam::Events;
 namespace Commands = Steam::Commands;
 namespace VDF = Steam::Utils::VDF;
@@ -15,34 +19,35 @@ int main() {
   boost::asio::io_context io_ctx;
   auto connection = std::make_unique<Steam::Networking::TCPConnection>(io_ctx);
 
-  Steam::SteamClient client(std::move(connection));
+  Steam::SteamClient client(std::move(connection), io_ctx);
 
   client.on<Events::MsgNotImplementedEvent>(
       [](const Events::MsgNotImplementedEvent& e) {
-        printf("Msg with id %u is not implemented.\n", e.emsg);
+        STEAMCLIENT_LOG_INFO("Msg with id {} is not implemented.", e.emsg);
       });
 
   client.on<Events::ProductInfoResult>(
       [](const Events::ProductInfoResult& res) {
-        printf("Received ProductInfoResult\n");
-        printf("Apps: %zu\n", res.apps.size());
-        printf("Packages: %zu\n", res.packages.size());
+        STEAMCLIENT_LOG_INFO("Received ProductInfoResult\n");
+        STEAMCLIENT_LOG_INFO("Apps: {}", res.apps.size());
+        STEAMCLIENT_LOG_INFO("Packages: {}", res.packages.size());
 
         for (const auto& app : res.apps) {
-          printf("AppID: %u | SHA: %s\n", app.appid, app.sha.c_str());
+          STEAMCLIENT_LOG_INFO("AppID: {} | SHA: {}", app.appid, app.sha);
 
           try {
             if (auto common = app.appinfo.get("common")) {
               auto name = common->get_string_or("name", "Unknown");
-              printf("Name: %s\n", name.c_str());
+              STEAMCLIENT_LOG_INFO("Name: {}", name);
             }
           } catch (...) {
-            printf("<not found>\n");
+            STEAMCLIENT_LOG_ERROR("<not found>");
           }
         }
 
         for (const auto& pkg : res.packages) {
-          printf("PackageID: %u | SHA: %s\n", pkg.packageid, pkg.sha.c_str());
+          STEAMCLIENT_LOG_INFO("PackageID: {} | SHA: {}", pkg.packageid,
+                               pkg.sha);
         }
       });
 
@@ -50,23 +55,24 @@ int main() {
       [&client](const Events::ClientLogonEvent& res) {
         if (res.ok()) {
           uint32_t app = 440;
-          printf("Successfully logged on\n");
-          printf("Attempting to get information about this app ID: %u\n", app);
+          STEAMCLIENT_LOG_INFO("Successfully logged on");
+          STEAMCLIENT_LOG_INFO(
+              "Attempting to get information about this app ID: {}", app);
 
           client.execute(
               Commands::GetProductInfo{app, res.steamid, res.client_sessionid});
         } else {
-          printf("Logon failed: %s\n", res.what().c_str());
+          STEAMCLIENT_LOG_ERROR("Logon failed: {}", res.what());
         }
       });
 
   client.on<Events::ChannelSecuredEvent>(
       [&client](const Events::ChannelSecuredEvent& res) {
         if (res.ok()) {
-          printf("Successfully secured channel\n");
+          STEAMCLIENT_LOG_INFO("Successfully secured channel");
           client.execute(Commands::AnonymousLogin{});
         } else {
-          printf("Failed to secure channel :(\n");
+          STEAMCLIENT_LOG_ERROR("Failed to secure channel :(");
         }
       });
 

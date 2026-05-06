@@ -140,6 +140,7 @@ void TCPConnection::do_write() {
 void TCPConnection::handle_disconnect(const std::string& reason) {
   STEAMCLIENT_LOG_INFO("Disconnected: {}", reason);
   network_close();
+  if (on_disconnect_) on_disconnect_(reason);
 }
 
 void TCPConnection::handle_disconnect(const std::error_code& ec) {

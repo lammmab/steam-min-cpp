@@ -5,6 +5,7 @@
 
 #include <steamclient/external/event_emitter.h>
 
+#include <boost/asio/steady_timer.hpp>
 #include <cstdint>
 #include <memory>
 #include <steamclient/connections/connection.hpp>
@@ -29,8 +30,9 @@ class JobIDs {
 
 class CMClient : public medooze::EventEmitter {
  public:
-  CMClient(std::unique_ptr<Steam::Networking::IConnection> connection)
-      : connection_(std::move(connection)) {}
+  CMClient(std::unique_ptr<Steam::Networking::IConnection> connection,
+           boost::asio::io_context& ctx)
+      : io_ctx_(ctx), connection_(std::move(connection)) {}
 
   ~CMClient() {
     if (connection_ && connection_->is_connected())
@@ -57,16 +59,17 @@ class CMClient : public medooze::EventEmitter {
     if (fn) fn(*this, &req);
   }
 
-  // This solution is super hacky; we will 100% want to correct this later and
-  // fix the base classes.
+  // Send a message to the connected Steam server.
   template <typename THdr>
   inline void send_msg(const Messages::MsgBaseHdr<THdr>& msg) {
     send_msg_impl(msg.Serialize());
   }
 
   void consume_frame(const std::vector<uint8_t>& frame, bool encrypt = true);
+  void kickoff_heartbeat(int interval);
 
  private:
+  void schedule_heartbeat();
   void send_msg_impl(std::vector<byte> buffer);
 
   inline const bool is_encryption_msg(uint32_t emsg_code) {
@@ -80,8 +83,11 @@ class CMClient : public medooze::EventEmitter {
   }
 
   bool channel_secured_ = false;
+  boost::asio::io_context& io_ctx_;
   std::unique_ptr<Steam::Networking::IConnection> connection_;
   Steam::Crypto::EncryptionManager crypto_;
+  std::optional<boost::asio::steady_timer> heartbeat_timer_;
+  std::chrono::seconds heartbeat_interval_{};
 };
 }  // namespace Steam::Messaging
 /// \endcond

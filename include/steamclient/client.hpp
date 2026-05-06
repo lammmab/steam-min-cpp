@@ -31,7 +31,8 @@ class SteamClient {
   /// Construct a Steam client using a specific connection implementation.
   /// @param connection Connection backend used for communicating with Steam CM
   /// servers.
-  SteamClient(std::unique_ptr<Steam::Networking::IConnection> connection);
+  SteamClient(std::unique_ptr<Steam::Networking::IConnection> connection,
+              boost::asio::io_context& ctx);
 
   /// Destructor
   /// Ensures the client disconnects from CM servers before destruction.

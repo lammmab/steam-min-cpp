@@ -14,7 +14,6 @@
 #include <steamclient/utilities/vdf.hpp>
 #include <string>
 
-
 namespace Steam::Messaging::Packets {
 class IPacketMsg;
 }
@@ -111,6 +110,14 @@ struct MsgNotImplementedEvent : Event {
       : emsg(e), packet(p) {}
 };
 
+/// Emitted when the TCP connection is dropped.
+struct DisconnectionEvent : Event {
+  /// The reason the TCP connection was dropped.
+  const std::string& reason;
+
+  explicit DisconnectionEvent(const std::string& r) : reason(r) {}
+};
+
 /// Result of a product information request.
 ///
 /// Returned in response to a `GetProductInfo` command.
@@ -166,6 +173,9 @@ struct AnonymousLogin : Command {};
 
 /// Request termination of the current Steam user session.
 struct ClientLogoff : Command {};
+
+/// Send a heartbeat to Steam CM servers to keep sessions alive.
+struct Heartbeat : Command {};
 
 /// Request product information for a Steam application.
 ///

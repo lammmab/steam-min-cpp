@@ -55,3 +55,8 @@ EncryptionManager::generate_encryption_response(
 
   return response;
 }
+
+void EncryptionManager::reset() {
+  session_key_.clear();
+  hmac_secret_.clear();
+}

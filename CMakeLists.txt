@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(SteamClient VERSION 1.0.0 LANGUAGES CXX)
+project(SteamClient VERSION 1.0.1 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,13 +16,10 @@ include(cmake/dependencies.cmake)
 include(cmake/protobuf.cmake)
 
 ## == SOURCES == ##
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cc
-)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/sources.cmake)
 
 add_library(SteamClient 
-    ${SOURCES}
+    ${STEAM_SOURCES}
     ${GENERATED_PROTO_SRCS}
 )
 

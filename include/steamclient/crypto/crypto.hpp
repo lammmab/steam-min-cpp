@@ -57,6 +57,8 @@ class EncryptionManager {
   std::vector<uint8_t> process_outgoing_encrypted_message(
       const std::vector<uint8_t>& frame);
 
+  void reset();
+
  private:
   CryptoPP::AutoSeededRandomPool rng_;  // persistent encryption RNG
   std::vector<uint8_t> session_key_;    // 32 byte session key

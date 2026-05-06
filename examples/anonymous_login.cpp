@@ -1,3 +1,5 @@
+#include <steamclient/macros.h>
+
 #include <boost/asio.hpp>
 #include <cstdio>
 #include <iostream>
@@ -7,6 +9,8 @@
 #include <steamclient/utilities/vdf.hpp>
 #include <thread>
 
+STEAMCLIENT_FILE_LOGGER();
+
 namespace Events = Steam::Events;
 namespace Commands = Steam::Commands;
 namespace VDF = Steam::Utils::VDF;
@@ -15,24 +19,24 @@ int main() {
   boost::asio::io_context io_ctx;
   auto connection = std::make_unique<Steam::Networking::TCPConnection>(io_ctx);
 
-  Steam::SteamClient client(std::move(connection));
+  Steam::SteamClient client(std::move(connection), io_ctx);
 
   client.on<Events::ClientLogonEvent>(
       [&client](const Events::ClientLogonEvent& res) {
         if (res.ok()) {
-          printf("Successfully logged on\n");
+          STEAMCLIENT_LOG_INFO("Successfully logged on");
         } else {
-          printf("Logon failed: %s\n", res.what().c_str());
+          STEAMCLIENT_LOG_ERROR("Logon failed: {}", res.what());
         }
       });
 
   client.on<Events::ChannelSecuredEvent>(
       [&client](const Events::ChannelSecuredEvent& res) {
         if (res.ok()) {
-          printf("Successfully secured channel\n");
+          STEAMCLIENT_LOG_INFO("Successfully secured channel");
           client.execute(Commands::AnonymousLogin{});
         } else {
-          printf("Failed to secure channel :(\n");
+          STEAMCLIENT_LOG_ERROR("Failed to secure channel :(");
         }
       });
 

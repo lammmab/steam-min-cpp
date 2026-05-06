@@ -3,6 +3,7 @@
 #include <exception>
 #include <steamclient/network/cmclient.hpp>
 
+#include "steamclient/events.hpp"
 STEAMCLIENT_FILE_LOGGER();
 
 using namespace Steam::Messaging;
@@ -18,6 +19,30 @@ void CMClient::start_session() {
     STEAMCLIENT_LOG_ERROR("Could not connect via TCP: {}", e.what());
     throw;
   }
+
+  connection_->set_on_disconnect([this](const std::string& reason) {
+    crypto_.reset();
+    channel_secured_ = false;
+    heartbeat_timer_->cancel();
+    emit(Events::DisconnectionEvent{reason});
+  });
+
+  heartbeat_timer_ = boost::asio::steady_timer(io_ctx_);
+}
+
+void CMClient::schedule_heartbeat() {
+  heartbeat_timer_->expires_after(heartbeat_interval_);
+  heartbeat_timer_->async_wait([this](boost::system::error_code ec) {
+    if (ec) return;
+    execute(Commands::Heartbeat{});
+    STEAMCLIENT_LOG_INFO("Sending heartbeat to server");
+    schedule_heartbeat();
+  });
+}
+
+void CMClient::kickoff_heartbeat(int interval) {
+  heartbeat_interval_ = std::chrono::seconds(interval);
+  schedule_heartbeat();
 }
 
 // Start consuming TCP messages
@@ -54,6 +79,7 @@ void CMClient::consume_frame(const std::vector<uint8_t>& frame, bool encrypt) {
   } catch (const std::exception& e) {
     STEAMCLIENT_LOG_ERROR("Failed to parse frame (EMsg: {}): {}", emsg,
                           e.what());
+    throw;
   }
 }
 
