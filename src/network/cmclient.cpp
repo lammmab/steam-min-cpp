@@ -8,6 +8,12 @@ STEAMCLIENT_FILE_LOGGER();
 
 using namespace Steam::Messaging;
 
+void CMClient::reset() {
+  crypto_.reset();
+  channel_secured_ = false;
+  heartbeat_timer_->cancel();
+}
+
 // Connect via TCP, then start message loop
 void CMClient::start_session() {
   try {
@@ -21,9 +27,7 @@ void CMClient::start_session() {
   }
 
   connection_->set_on_disconnect([this](const std::string& reason) {
-    crypto_.reset();
-    channel_secured_ = false;
-    heartbeat_timer_->cancel();
+    reset();
     emit(Events::DisconnectionEvent{reason});
   });
 
@@ -93,6 +97,7 @@ void CMClient::send_msg_impl(std::vector<byte> buffer) {
 // Shuts down the internal CMClient
 void CMClient::shutdown() {
   if (connection_ && connection_->is_connected()) connection_->network_close();
+  reset();
 
   STEAMCLIENT_LOG_INFO("Closed connection and CMClient successfully");
 }

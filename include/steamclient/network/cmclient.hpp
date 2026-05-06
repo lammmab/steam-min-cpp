@@ -34,10 +34,7 @@ class CMClient : public medooze::EventEmitter {
            boost::asio::io_context& ctx)
       : io_ctx_(ctx), connection_(std::move(connection)) {}
 
-  ~CMClient() {
-    if (connection_ && connection_->is_connected())
-      connection_->network_close();
-  }
+  ~CMClient() { shutdown(); }
 
   void start_session();
   void shutdown();
@@ -71,6 +68,7 @@ class CMClient : public medooze::EventEmitter {
  private:
   void schedule_heartbeat();
   void send_msg_impl(std::vector<byte> buffer);
+  void reset();
 
   inline const bool is_encryption_msg(uint32_t emsg_code) {
     return (
