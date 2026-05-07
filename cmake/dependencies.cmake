@@ -10,7 +10,7 @@ if(NOT TARGET Boost::system)
 endif()
 
 find_package(CURL REQUIRED)
-find_package(Protobuf REQUIRED)
+find_package(SteamProtos REQUIRED)
 find_package(absl REQUIRED)
 find_package(PkgConfig QUIET)
 if(PkgConfig_FOUND)

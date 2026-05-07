@@ -13,14 +13,12 @@ option(STEAMCLIENT_ENABLE_LOGGING "Enable spdlog logging" OFF)
 
 ## == MODULES == ##
 include(cmake/dependencies.cmake)
-include(cmake/protobuf.cmake)
 
 ## == SOURCES == ##
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/sources.cmake)
 
 add_library(SteamClient 
     ${STEAM_SOURCES}
-    ${GENERATED_PROTO_SRCS}
 )
 
 ## == OPTIONAL LOGGING == ##
@@ -29,7 +27,7 @@ include(cmake/logging.cmake)
 target_link_libraries(SteamClient
     PUBLIC
         Boost::system
-        protobuf::libprotobuf
+        SteamProtos::SteamProtos
         ${CRYPTOPP_LIB}
     PRIVATE
         absl::check
@@ -42,7 +40,6 @@ target_include_directories(SteamClient
     PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include>
-        $<BUILD_INTERFACE:${PROTO_OUTPUT_DIR}>
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
